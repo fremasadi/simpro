@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- item_user.xml - Table Row (TR) with Table Data (TD) -->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="?attr/selectableItemBackground">
+
+    <!-- Table Row (TR) -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:minHeight="56dp"
+        android:gravity="center_vertical"
+        android:background="#FFFFFF">
+
+        <!-- TD: No Column -->
+        <TextView
+            android:id="@+id/tvUserNumber"
+            android:layout_width="60dp"
+            android:layout_height="match_parent"
+            android:text="1"
+            android:textSize="14sp"
+            android:textColor="#212121"
+            android:gravity="center"
+            android:paddingVertical="12dp"
+            android:paddingHorizontal="8dp" />
+
+        <!-- Vertical Divider -->
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#E0E0E0" />
+
+        <!-- TD: Name Column -->
+        <TextView
+            android:id="@+id/tvUserName"
+            android:layout_width="200dp"
+            android:layout_height="match_parent"
+            android:text="John Doe"
+            android:textSize="14sp"
+            android:textColor="#212121"
+            android:textStyle="bold"
+            android:gravity="center_vertical"
+            android:paddingVertical="12dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="8dp"
+            android:ellipsize="end"
+            android:maxLines="2" />
+
+        <!-- Vertical Divider -->
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#E0E0E0" />
+
+        <!-- TD: Email Column -->
+        <TextView
+            android:id="@+id/tvUserEmail"
+            android:layout_width="250dp"
+            android:layout_height="match_parent"
+            android:text="john.doe@example.com"
+            android:textSize="13sp"
+            android:textColor="#616161"
+            android:gravity="center_vertical"
+            android:paddingVertical="12dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="8dp"
+            android:ellipsize="end"
+            android:maxLines="2" />
+
+        <!-- Vertical Divider -->
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#E0E0E0" />
+
+        <!-- TD: Role Column -->
+        <FrameLayout
+            android:layout_width="150dp"
+            android:layout_height="match_parent"
+            android:paddingVertical="12dp"
+            android:paddingStart="16dp"
+            android:paddingEnd="8dp">
+
+            <TextView
+                android:id="@+id/tvUserRole"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:text="Admin"
+                android:textSize="12sp"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:background="@drawable/bg_role_badge"
+                android:paddingHorizontal="16dp"
+                android:paddingVertical="6dp"
+                android:textAllCaps="true" />
+
+        </FrameLayout>
+
+        <!-- Vertical Divider -->
+        <View
+            android:layout_width="1dp"
+            android:layout_height="match_parent"
+            android:background="#E0E0E0" />
+
+        <!-- TD: Action Column -->
+        <LinearLayout
+            android:layout_width="140dp"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:paddingVertical="12dp"
+            android:paddingHorizontal="8dp">
+
+            <ImageButton
+                android:id="@+id/btnEdit"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@android:drawable/ic_menu_edit"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:tint="#2196F3"
+                android:scaleType="centerInside"
+                android:contentDescription="Edit User" />
+
+<!--            <ImageButton-->
+<!--                android:id="@+id/btnDelete"-->
+<!--                android:layout_width="36dp"-->
+<!--                android:layout_height="36dp"-->
+<!--                android:layout_marginStart="8dp"-->
+<!--                android:src="@android:drawable/ic_menu_delete"-->
+<!--                android:background="?attr/selectableItemBackgroundBorderless"-->
+<!--                android:tint="#F44336"-->
+<!--                android:scaleType="centerInside"-->
+<!--                android:contentDescription="Delete User" />-->
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Horizontal Divider (Border Bottom) -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E0E0E0" />
+
+</LinearLayout>

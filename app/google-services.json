@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1055530760354",
+    "project_id": "simproh-ae974",
+    "storage_bucket": "simproh-ae974.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1055530760354:android:66d57e75e6634eeac5fffb",
+        "android_client_info": {
+          "package_name": "com.zahwaalviana.simpro"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD8Vo6v4G_g_jvrIhOGMN7Gz0ne0WOUWec"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

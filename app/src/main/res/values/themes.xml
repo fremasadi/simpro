@@ -1,0 +1,25 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Tema dasar aplikasi -->
+    <style name="Base.Theme.SIMPRO" parent="Theme.Material3.Light.NoActionBar">
+        <!-- Warna utama -->
+        <item name="colorPrimary">#E59BA6</item>
+        <item name="colorPrimaryContainer">#E59BA6</item>
+        <item name="colorOnPrimary">#FFFFFF</item>
+
+        <!-- Status Bar -->
+        <item name="android:statusBarColor">#E59BA6</item>
+        <item name="android:windowLightStatusBar">true</item>
+
+        <!-- Matikan dukungan dark mode -->
+
+        <!-- Warna background default -->
+        <item name="android:windowBackground">#FFFFFF</item>
+        <item name="colorSurface">#FFFFFF</item>
+
+        <!-- Font warna gelap biar kontras -->
+        <item name="android:textColor">#333333</item>
+    </style>
+
+    <style name="Theme.SIMPRO" parent="Base.Theme.SIMPRO" />
+</resources>

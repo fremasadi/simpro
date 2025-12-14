@@ -1,0 +1,248 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#FFFFFF">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <!-- Header Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp"
+            android:background="#FFFFFF">
+
+            <!-- Title and Add Button -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Data Produksi"
+                    android:textSize="24sp"
+                    android:textColor="#212121"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/btnAddProduksi"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="+ Tambah Produksi"
+                    android:textAllCaps="false"
+                    android:backgroundTint="#E59BA6"
+                    android:textColor="#FFFFFF"
+                    android:paddingHorizontal="24dp"
+                    android:paddingVertical="12dp"
+                    app:cornerRadius="6dp" />
+
+            </LinearLayout>
+
+            <!-- Search Section -->
+            <SearchView
+                android:id="@+id/searchView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:background="@drawable/bg_search_view"
+                android:iconifiedByDefault="false"
+                android:queryHint="Cari produksi..."
+                android:searchIcon="@android:drawable/ic_menu_search" />
+
+        </LinearLayout>
+
+        <!-- Divider -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:background="#E0E0E0" />
+
+        <!-- Table Container with Horizontal Scroll -->
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipeRefreshLayout"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <FrameLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+
+                <HorizontalScrollView
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:fillViewport="true"
+                    android:scrollbars="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical"
+                        android:minWidth="700dp">
+
+                        <!-- Table Header -->
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:background="#F5F5F5"
+                            android:paddingVertical="16dp">
+
+                            <!-- No -->
+                            <TextView
+                                android:layout_width="60dp"
+                                android:layout_height="wrap_content"
+                                android:text="No"
+                                android:textSize="14sp"
+                                android:textColor="#424242"
+                                android:textStyle="bold"
+                                android:gravity="center"
+                                android:paddingHorizontal="8dp" />
+
+                            <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#E0E0E0"/>
+
+                            <!-- Tanggal -->
+                            <TextView
+                                android:layout_width="200dp"
+                                android:layout_height="wrap_content"
+                                android:text="Tanggal"
+                                android:textSize="14sp"
+                                android:textColor="#424242"
+                                android:textStyle="bold"
+                                android:gravity="center" />
+
+                            <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#E0E0E0"/>
+
+                            <!-- Nama Barang -->
+                            <TextView
+                                android:layout_width="270dp"
+                                android:layout_height="wrap_content"
+                                android:text="Nama Barang"
+                                android:textSize="14sp"
+                                android:textColor="#424242"
+                                android:textStyle="bold"
+                                android:paddingStart="16dp"
+                                android:paddingEnd="8dp" />
+
+                            <View android:layout_width="1dp" android:layout_height="match_parent"
+                                android:background="#E0E0E0"/>
+
+                            <!-- Produksi -->
+                            <TextView
+                                android:layout_width="150dp"
+                                android:layout_height="wrap_content"
+                                android:text="Produksi"
+                                android:textSize="14sp"
+                                android:textColor="#424242"
+                                android:textStyle="bold"
+                                android:gravity="center" />
+
+                            <View android:layout_width="1dp" android:layout_height="match_parent"
+                                android:background="#E0E0E0"/>
+
+                            <!-- Keluar -->
+                            <TextView
+                                android:layout_width="150dp"
+                                android:layout_height="wrap_content"
+                                android:text="Keluar"
+                                android:textSize="14sp"
+                                android:textColor="#424242"
+                                android:textStyle="bold"
+                                android:gravity="center" />
+
+                            <View android:layout_width="1dp" android:layout_height="match_parent"
+                                android:background="#E0E0E0"/>
+
+                            <!-- Aksi -->
+                            <TextView
+                                android:layout_width="100dp"
+                                android:layout_height="wrap_content"
+                                android:text="Aksi"
+                                android:textSize="14sp"
+                                android:textColor="#424242"
+                                android:textStyle="bold"
+                                android:gravity="center" />
+
+                        </LinearLayout>
+
+                        <!-- Row Divider -->
+                        <View
+                            android:layout_width="match_parent"
+                            android:layout_height="1dp"
+                            android:background="#E0E0E0" />
+
+                        <!-- RecyclerView -->
+                        <androidx.recyclerview.widget.RecyclerView
+                            android:id="@+id/recyclerViewProduksi"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="#FFFFFF" />
+
+                    </LinearLayout>
+
+                </HorizontalScrollView>
+
+                <!-- LOADING -->
+                <ProgressBar
+                    android:id="@+id/progressBar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:visibility="gone"
+                    android:indeterminateTint="#E59BA6" />
+
+                <!-- Empty State -->
+                <LinearLayout
+                    android:id="@+id/emptyStateLayout"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:gravity="center"
+                    android:layout_gravity="center"
+                    android:visibility="gone"
+                    android:padding="32dp">
+
+                    <ImageView
+                        android:layout_width="120dp"
+                        android:layout_height="120dp"
+                        android:src="@android:drawable/ic_menu_gallery"
+                        android:alpha="0.3"
+                        app:tint="#E59BA6" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Belum ada produksi"
+                        android:textSize="18sp"
+                        android:textColor="#666666"
+                        android:textStyle="bold"
+                        android:layout_marginTop="16dp" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Tambahkan data produksi"
+                        android:textSize="14sp"
+                        android:textColor="#999999"
+                        android:layout_marginTop="8dp" />
+
+                </LinearLayout>
+
+            </FrameLayout>
+
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    </LinearLayout>
+
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
