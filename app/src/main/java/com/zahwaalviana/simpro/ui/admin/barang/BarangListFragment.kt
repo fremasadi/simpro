@@ -5,27 +5,28 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.SearchView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import com.zahwaalviana.simpro.data.model.Barang
+import com.zahwaalviana.simpro.data.model.BarangVarian
+import com.zahwaalviana.simpro.data.model.BarangWithVarian
 import com.zahwaalviana.simpro.databinding.FragmentBarangListBinding
 import com.zahwaalviana.simpro.ui.admin.barang.adapter.BarangAdapter
 
 class BarangListFragment : Fragment() {
+
     private var _binding: FragmentBarangListBinding? = null
     private val binding get() = _binding!!
 
-    private val db = FirebaseFirestore.getInstance()
-    private lateinit var barangAdapter: BarangAdapter
+    private lateinit var db: FirebaseFirestore
+    private lateinit var adapter: BarangAdapter
     private var barangListener: ListenerRegistration? = null
-
-    private var allBarang = listOf<Barang>()
-    private var filteredBarang = listOf<Barang>()
+    private val barangList = mutableListOf<BarangWithVarian>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,140 +39,199 @@ class BarangListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        db = FirebaseFirestore.getInstance()
+
+        setupToolbar()
         setupRecyclerView()
-        setupSearchView()
         setupListeners()
-        loadBarang()
+        loadBarangData()
+    }
+
+    private fun setupToolbar() {
+        binding.appBarLayout.visibility = View.GONE
     }
 
     private fun setupRecyclerView() {
-        barangAdapter = BarangAdapter(
-            onEditClick = { barang ->
-                navigateToEditBarang(barang)
+        adapter = BarangAdapter(
+            barangList,
+            onEditClick = { barangWithVarian ->
+                val intent = Intent(requireContext(), BarangFormActivity::class.java)
+                intent.putExtra("BARANG_ID", barangWithVarian.barang.id)
+                startActivity(intent)
             },
-            onDeleteClick = { barang ->
-                showDeleteConfirmation(barang)
+            onDeleteClick = { barangWithVarian ->
+                showDeleteConfirmation(barangWithVarian)
             }
         )
 
-        binding.recyclerViewBarang.apply {
-            layoutManager = LinearLayoutManager(requireContext())
-            adapter = barangAdapter
-            setHasFixedSize(true)
-        }
-    }
-
-    private fun setupSearchView() {
-        binding.searchView.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
-            override fun onQueryTextSubmit(query: String?): Boolean {
-                return false
-            }
-
-            override fun onQueryTextChange(newText: String?): Boolean {
-                filterBarang(newText ?: "")
-                return true
-            }
-        })
+        binding.rvBarang.layoutManager = LinearLayoutManager(requireContext())
+        binding.rvBarang.adapter = adapter
     }
 
     private fun setupListeners() {
-        binding.btnAddBarang.setOnClickListener {
-            navigateToAddBarang()
+        binding.fabAdd.setOnClickListener {
+            startActivity(Intent(requireContext(), BarangFormActivity::class.java))
         }
 
-        binding.swipeRefreshLayout.setOnRefreshListener {
-            loadBarang()
+        binding.swipeRefresh.setOnRefreshListener {
+            loadBarangData()
         }
     }
 
-    private fun loadBarang() {
+//    override fun onResume() {
+//        super.onResume()
+//        // Reload data setiap kali fragment muncul kembali
+//        loadBarangData()
+//    }
+
+    private fun loadBarangData() {
         showLoading(true)
 
         barangListener = db.collection("master_barang")
-            .addSnapshotListener { snapshot, error ->
-                showLoading(false)
-
+            .orderBy("created_at", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshots, error ->
                 if (error != null) {
-                    showError("Gagal memuat data: ${error.message}")
+                    showLoading(false)
+                    binding.swipeRefresh.isRefreshing = false
+                    Toast.makeText(requireContext(), "Error: ${error.message}", Toast.LENGTH_SHORT).show()
                     return@addSnapshotListener
                 }
 
-                if (snapshot != null && !snapshot.isEmpty) {
-                    allBarang = snapshot.documents.mapNotNull { doc ->
-                        doc.toObject(Barang::class.java)?.copy(barangId = doc.id)
+                barangList.clear()
+                val loadedBarang = snapshots?.documents?.size ?: 0
+                var processedBarang = 0
+
+                if (loadedBarang == 0) {
+                    showLoading(false)
+                    binding.swipeRefresh.isRefreshing = false
+                    updateEmptyState()
+                    return@addSnapshotListener
+                }
+
+                snapshots?.documents?.forEach { doc ->
+                    val barang = Barang(
+                        id = doc.id,
+                        namaBarang = doc.getString("nama_barang") ?: ""
+                    )
+
+                    // Load varian for this barang
+                    loadVarianForBarang(barang) { varianList ->
+                        barangList.add(BarangWithVarian(barang, varianList))
+                        processedBarang++
+
+                        if (processedBarang == loadedBarang) {
+                            showLoading(false)
+                            binding.swipeRefresh.isRefreshing = false
+                            adapter.notifyDataSetChanged()
+                            updateEmptyState()
+                        }
                     }
-                    filteredBarang = allBarang
-                    barangAdapter.submitList(filteredBarang)
-                    showEmptyState(false)
-                } else {
-                    allBarang = emptyList()
-                    filteredBarang = emptyList()
-                    barangAdapter.submitList(emptyList())
-                    showEmptyState(true)
                 }
             }
     }
 
-    private fun filterBarang(query: String) {
-        filteredBarang = if (query.isEmpty()) {
-            allBarang
-        } else {
-            allBarang.filter {
-                it.namaBahanBaku.contains(query, ignoreCase = true) ||
-                        it.namaBarangJadi.contains(query, ignoreCase = true)
+    private fun loadVarianForBarang(barang: Barang, callback: (List<BarangVarian>) -> Unit) {
+        db.collection("barang_varian")
+            .whereEqualTo("barang_id", barang.id)
+            .get()
+            .addOnSuccessListener { varianDocs ->
+                val varianList = mutableListOf<BarangVarian>()
+                val totalVarian = varianDocs.size()
+                var processedVarian = 0
+
+                if (totalVarian == 0) {
+                    callback(emptyList())
+                    return@addOnSuccessListener
+                }
+
+                varianDocs.documents.forEach { varianDoc ->
+                    val kemasanId = varianDoc.getString("kemasan_id") ?: ""
+
+                    // Load kemasan data
+                    db.collection("master_kemasan")
+                        .document(kemasanId)
+                        .get()
+                        .addOnSuccessListener { kemasanDoc ->
+                            val varian = BarangVarian(
+                                id = varianDoc.id,
+                                barangId = varianDoc.getString("barang_id") ?: "",
+                                kemasanId = kemasanId,
+                                kemasanNama = kemasanDoc.getString("nama_kemasan") ?: "",
+                                kemasanSatuan = kemasanDoc.getString("satuan") ?: "",
+                                shelfLifeHari = varianDoc.getLong("shelf_life_hari")?.toInt() ?: 0,
+                                hargaJual = varianDoc.getLong("harga_jual")?.toInt() ?: 0
+                            )
+                            varianList.add(varian)
+                            processedVarian++
+
+                            if (processedVarian == totalVarian) {
+                                callback(varianList)
+                            }
+                        }
+                        .addOnFailureListener {
+                            processedVarian++
+                            if (processedVarian == totalVarian) {
+                                callback(varianList)
+                            }
+                        }
+                }
             }
-        }
-        barangAdapter.submitList(filteredBarang)
-        showEmptyState(filteredBarang.isEmpty())
+            .addOnFailureListener {
+                callback(emptyList())
+            }
     }
 
-    private fun navigateToAddBarang() {
-        startActivity(Intent(requireContext(), BarangFormActivity::class.java))
-    }
-
-    private fun navigateToEditBarang(barang: Barang) {
-        val intent = Intent(requireContext(), BarangFormActivity::class.java).apply {
-            putExtra("BARANG_DATA", barang)
-        }
-        startActivity(intent)
-    }
-
-    private fun showDeleteConfirmation(barang: Barang) {
+    private fun showDeleteConfirmation(barangWithVarian: BarangWithVarian) {
         AlertDialog.Builder(requireContext())
             .setTitle("Hapus Barang")
-            .setMessage("Apakah Anda yakin ingin menghapus ${barang.namaBarangJadi}?")
+            .setMessage("Apakah Anda yakin ingin menghapus ${barangWithVarian.barang.namaBarang}? Semua varian juga akan dihapus.")
             .setPositiveButton("Hapus") { _, _ ->
-                deleteBarang(barang)
+                deleteBarang(barangWithVarian)
             }
             .setNegativeButton("Batal", null)
             .show()
     }
 
-    private fun deleteBarang(barang: Barang) {
-        barang.barangId?.let { id ->
-            db.collection("master_barang").document(id)
-                .delete()
-                .addOnSuccessListener {
-                    showError("Barang berhasil dihapus")
+    private fun deleteBarang(barangWithVarian: BarangWithVarian) {
+        // Delete all varian first
+        db.collection("barang_varian")
+            .whereEqualTo("barang_id", barangWithVarian.barang.id)
+            .get()
+            .addOnSuccessListener { varianDocs ->
+                val batch = db.batch()
+                varianDocs.documents.forEach { doc ->
+                    batch.delete(doc.reference)
                 }
-                .addOnFailureListener { e ->
-                    showError("Gagal menghapus: ${e.message}")
-                }
+
+                // Delete barang
+                batch.delete(db.collection("master_barang").document(barangWithVarian.barang.id))
+
+                batch.commit()
+                    .addOnSuccessListener {
+                        Toast.makeText(requireContext(), "Data berhasil dihapus", Toast.LENGTH_SHORT).show()
+                    }
+                    .addOnFailureListener { e ->
+                        Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+            }
+            .addOnFailureListener { e ->
+                Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun updateEmptyState() {
+        if (barangList.isEmpty()) {
+            binding.tvEmpty.visibility = View.VISIBLE
+            binding.rvBarang.visibility = View.GONE
+        } else {
+            binding.tvEmpty.visibility = View.GONE
+            binding.rvBarang.visibility = View.VISIBLE
         }
     }
 
-    private fun showLoading(isLoading: Boolean) {
-        binding.swipeRefreshLayout.isRefreshing = isLoading
-        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-    }
-
-    private fun showEmptyState(isEmpty: Boolean) {
-        binding.emptyStateLayout.visibility = if (isEmpty) View.VISIBLE else View.GONE
-        binding.recyclerViewBarang.visibility = if (isEmpty) View.GONE else View.VISIBLE
-    }
-
-    private fun showError(message: String) {
-        Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show()
+    private fun showLoading(show: Boolean) {
+        binding.progressBar.visibility = if (show) View.VISIBLE else View.GONE
     }
 
     override fun onDestroyView() {

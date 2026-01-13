@@ -87,11 +87,11 @@ class UserListFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        binding.btnAddUser.setOnClickListener {
+        binding.fabAdd.setOnClickListener {
             navigateToAddUser()
         }
 
-        binding.swipeRefreshLayout.setOnRefreshListener {
+        binding.swipeRefresh.setOnRefreshListener {
             loadUsers()
         }
     }
@@ -172,7 +172,7 @@ class UserListFragment : Fragment() {
     }
 
     private fun showLoading(isLoading: Boolean) {
-        binding.swipeRefreshLayout.isRefreshing = isLoading
+        binding.swipeRefresh.isRefreshing = isLoading
         binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
     }
 

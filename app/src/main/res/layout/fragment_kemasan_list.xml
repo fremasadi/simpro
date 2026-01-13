@@ -1,231 +1,77 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- fragment_kemasan_list.xml -->
-<androidx.coordinatorlayout.widget.CoordinatorLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF">
 
-    <LinearLayout
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="vertical">
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toTopOf="parent">
 
-        <!-- Header Section -->
-        <LinearLayout
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="16dp"
-            android:background="#FFFFFF">
+            android:layout_height="?attr/actionBarSize"
+            android:background="#E59BA6"
+            android:elevation="4dp"
+            app:title="Master Kemasan"
+            app:titleTextColor="#FFFFFF" />
 
-            <!-- Title and Add Button -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
+    </com.google.android.material.appbar.AppBarLayout>
 
-                <TextView
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:text="Master Kemasan"
-                    android:textSize="24sp"
-                    android:textColor="#212121"
-                    android:textStyle="bold" />
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefresh"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        app:layout_constraintTop_toBottomOf="@id/appBarLayout"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-                <Button
-                    android:id="@+id/btnAddKemasan"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="+ Tambah Kemasan"
-                    android:textAllCaps="false"
-                    android:backgroundTint="#E59BA6"
-                    android:textColor="#FFFFFF"
-                    android:paddingHorizontal="24dp"
-                    android:paddingVertical="12dp"
-                    app:cornerRadius="6dp" />
-
-            </LinearLayout>
-
-            <!-- Search Section -->
-            <SearchView
-                android:id="@+id/searchView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:background="@drawable/bg_search_view"
-                android:iconifiedByDefault="false"
-                android:queryHint="Cari kemasan atau barang..."
-                android:searchIcon="@android:drawable/ic_menu_search" />
-
-        </LinearLayout>
-
-        <!-- Divider -->
-        <View
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvKemasan"
             android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="#E0E0E0" />
+            android:layout_height="match_parent"
+            android:padding="8dp"
+            android:clipToPadding="false" />
 
-        <!-- Table Container with Horizontal Scroll -->
-        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-            android:id="@+id/swipeRefreshLayout"
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1">
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="match_parent">
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:indeterminateTint="#E59BA6"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-                <HorizontalScrollView
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:fillViewport="true"
-                    android:scrollbars="horizontal">
+    <TextView
+        android:id="@+id/tvEmpty"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Belum ada data kemasan"
+        android:textSize="16sp"
+        android:textColor="#757575"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-                    <LinearLayout
-                        android:layout_width="wrap_content"
-                        android:layout_height="match_parent"
-                        android:orientation="vertical"
-                        android:minWidth="700dp">
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fabAdd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:src="@android:drawable/ic_input_add"
+        android:contentDescription="Tambah Kemasan"
+        app:backgroundTint="#E59BA6"
+        app:tint="#FFFFFF"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
 
-                        <!-- Table Header -->
-                        <LinearLayout
-                            android:layout_width="match_parent"
-                            android:layout_height="wrap_content"
-                            android:orientation="horizontal"
-                            android:background="#F5F5F5"
-                            android:paddingVertical="16dp">
-
-                            <!-- No Column -->
-                            <TextView
-                                android:layout_width="60dp"
-                                android:layout_height="wrap_content"
-                                android:text="No"
-                                android:textSize="14sp"
-                                android:textColor="#424242"
-                                android:textStyle="bold"
-                                android:gravity="center"
-                                android:paddingHorizontal="8dp" />
-
-                            <View
-                                android:layout_width="1dp"
-                                android:layout_height="match_parent"
-                                android:background="#E0E0E0" />
-
-                            <!-- Nama Kemasan Column -->
-                            <TextView
-                                android:layout_width="250dp"
-                                android:layout_height="wrap_content"
-                                android:text="Nama Kemasan"
-                                android:textSize="14sp"
-                                android:textColor="#424242"
-                                android:textStyle="bold"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="8dp" />
-
-                            <View
-                                android:layout_width="1dp"
-                                android:layout_height="match_parent"
-                                android:background="#E0E0E0" />
-
-                            <!-- Nama Barang Jadi Column -->
-                            <TextView
-                                android:layout_width="290dp"
-                                android:layout_height="wrap_content"
-                                android:text="Barang Jadi"
-                                android:textSize="14sp"
-                                android:textColor="#424242"
-                                android:textStyle="bold"
-                                android:paddingStart="16dp"
-                                android:paddingEnd="8dp" />
-
-                            <View
-                                android:layout_width="1dp"
-                                android:layout_height="match_parent"
-                                android:background="#E0E0E0" />
-
-                            <!-- Action Column -->
-                            <TextView
-                                android:layout_width="100dp"
-                                android:layout_height="wrap_content"
-                                android:text="Aksi"
-                                android:textSize="14sp"
-                                android:textColor="#424242"
-                                android:textStyle="bold"
-                                android:gravity="center"
-                                android:paddingHorizontal="8dp" />
-
-                        </LinearLayout>
-
-                        <!-- Horizontal Divider -->
-                        <View
-                            android:layout_width="match_parent"
-                            android:layout_height="1dp"
-                            android:background="#E0E0E0" />
-
-                        <!-- Table Body (RecyclerView) -->
-                        <androidx.recyclerview.widget.RecyclerView
-                            android:id="@+id/recyclerViewKemasan"
-                            android:layout_width="match_parent"
-                            android:layout_height="match_parent"
-                            android:background="#FFFFFF" />
-
-                    </LinearLayout>
-
-                </HorizontalScrollView>
-
-                <ProgressBar
-                    android:id="@+id/progressBar"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:visibility="gone"
-                    android:indeterminateTint="#E59BA6" />
-
-                <LinearLayout
-                    android:id="@+id/emptyStateLayout"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:orientation="vertical"
-                    android:gravity="center"
-                    android:visibility="gone"
-                    android:padding="32dp">
-
-                    <ImageView
-                        android:layout_width="120dp"
-                        android:layout_height="120dp"
-                        android:src="@android:drawable/ic_menu_save"
-                        android:alpha="0.3"
-                        app:tint="#E59BA6" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Belum ada kemasan"
-                        android:textSize="18sp"
-                        android:textColor="#666666"
-                        android:textStyle="bold"
-                        android:layout_marginTop="16dp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Tambahkan kemasan pertama Anda"
-                        android:textSize="14sp"
-                        android:textColor="#999999"
-                        android:layout_marginTop="8dp" />
-
-                </LinearLayout>
-
-            </FrameLayout>
-
-        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-
-    </LinearLayout>
-
-</androidx.coordinatorlayout.widget.CoordinatorLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

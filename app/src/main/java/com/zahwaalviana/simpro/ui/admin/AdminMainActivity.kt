@@ -16,6 +16,7 @@ import com.zahwaalviana.simpro.ui.admin.barang.BarangListFragment
 import com.zahwaalviana.simpro.ui.admin.kemasan.KemasanListFragment
 import com.zahwaalviana.simpro.ui.auth.LoginActivity
 import com.zahwaalviana.simpro.ui.admin.user.UserListFragment
+import androidx.core.graphics.toColorInt
 
 class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -26,7 +27,7 @@ class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        window.statusBarColor = android.graphics.Color.parseColor("#E59BA6")
+        window.statusBarColor = "#E59BA6".toColorInt()
 
         setContentView(R.layout.activity_admin_main)
 
@@ -92,14 +93,4 @@ class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         return true
     }
 
-
-
-    @SuppressLint("GestureBackNavigation")
-    override fun onBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START)
-        } else {
-            super.onBackPressed()
-        }
-    }
 }

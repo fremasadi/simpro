@@ -1,17 +1,15 @@
 package com.zahwaalviana.simpro.ui.admin.user.adapter
 
+import android.graphics.Color
 import android.graphics.drawable.GradientDrawable
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
-import android.widget.ImageButton
-import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.recyclerview.widget.RecyclerView
 import com.zahwaalviana.simpro.R
 import com.zahwaalviana.simpro.data.model.User
+import com.zahwaalviana.simpro.databinding.ItemUserBinding
 
-// UserAdapter.kt
 class UserAdapter(
     private val onEditClick: (User) -> Unit,
     private val onDeleteClick: (User) -> Unit
@@ -25,9 +23,12 @@ class UserAdapter(
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {
-        val view = LayoutInflater.from(parent.context)
-            .inflate(R.layout.item_user, parent, false)
-        return UserViewHolder(view)
+        val binding = ItemUserBinding.inflate(
+            LayoutInflater.from(parent.context),
+            parent,
+            false
+        )
+        return UserViewHolder(binding)
     }
 
     override fun onBindViewHolder(holder: UserViewHolder, position: Int) {
@@ -36,59 +37,52 @@ class UserAdapter(
 
     override fun getItemCount() = users.size
 
-    inner class UserViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        private val numberText = itemView.findViewById<TextView>(R.id.tvUserNumber)
-        private val nameText = itemView.findViewById<TextView>(R.id.tvUserName)
-        private val emailText = itemView.findViewById<TextView>(R.id.tvUserEmail)
-        private val roleText = itemView.findViewById<TextView>(R.id.tvUserRole)
-        private val editButton = itemView.findViewById<ImageButton>(R.id.btnEdit)
-        private val deleteButton = itemView.findViewById<ImageButton>(R.id.btnDelete)
+    inner class UserViewHolder(private val binding: ItemUserBinding) :
+        RecyclerView.ViewHolder(binding.root) {
 
         fun bind(user: User, number: Int) {
-            numberText.text = number.toString()
-            nameText.text = user.name
-            emailText.text = user.email
-            roleText.text = user.role.uppercase()
+            binding.apply {
+                // Set user data
+                tvUserName.text = user.name
+                tvUserEmail.text = user.email
+                tvUserRole.text = user.role.uppercase()
 
-            // Set background color based on role (like HTML/CSS)
-            val backgroundColor: Int
-            val textColor: Int
+                // Set background color based on role
+                val backgroundColor: Int
+                val textColor: Int
 
-            when (user.role.lowercase()) {
-                "admin" -> {
-                    backgroundColor = ContextCompat.getColor(itemView.context, android.R.color.holo_blue_light)
-                    textColor = ContextCompat.getColor(itemView.context, android.R.color.white)
+                when (user.role.lowercase()) {
+                    "admin" -> {
+                        backgroundColor = ContextCompat.getColor(root.context, android.R.color.holo_red_light)
+                        textColor = ContextCompat.getColor(root.context, android.R.color.white)
+                    }
+                    "mandor" -> {
+                        backgroundColor = ContextCompat.getColor(root.context, android.R.color.holo_green_light)
+                        textColor = ContextCompat.getColor(root.context, android.R.color.white)
+                    }
+                    else -> {
+                        backgroundColor = ContextCompat.getColor(root.context, android.R.color.darker_gray)
+                        textColor = ContextCompat.getColor(root.context, android.R.color.white)
+                    }
                 }
-                "mandor" -> {
-                    backgroundColor = ContextCompat.getColor(itemView.context, android.R.color.holo_green_light)
-                    textColor = ContextCompat.getColor(itemView.context, android.R.color.white)
+
+                // Create rounded background programmatically
+                val drawable = GradientDrawable()
+                drawable.shape = GradientDrawable.RECTANGLE
+                drawable.setColor(backgroundColor)
+                drawable.cornerRadius = 12f * root.resources.displayMetrics.density
+
+                tvUserRole.background = drawable
+                tvUserRole.setTextColor(textColor)
+
+                // Set click listeners
+                ivEdit.setOnClickListener {
+                    onEditClick(user)
                 }
-                else -> {
-                    backgroundColor = ContextCompat.getColor(itemView.context, android.R.color.darker_gray)
-                    textColor = ContextCompat.getColor(itemView.context, android.R.color.white)
+
+                root.setOnClickListener {
+                    onEditClick(user)
                 }
-            }
-
-            // Create rounded background programmatically
-            val drawable = GradientDrawable()
-            drawable.shape = GradientDrawable.RECTANGLE
-            drawable.setColor(backgroundColor)
-            drawable.cornerRadius = 12f * itemView.resources.displayMetrics.density
-
-            roleText.background = drawable
-            roleText.setTextColor(textColor)
-
-            // Set click listeners
-            editButton.setOnClickListener {
-                onEditClick(user)
-            }
-
-//            deleteButton.setOnClickListener {
-//                onDeleteClick(user)
-//            }
-
-            itemView.setOnClickListener {
-                onEditClick(user)
             }
         }
     }

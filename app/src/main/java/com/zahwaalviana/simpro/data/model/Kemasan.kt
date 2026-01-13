@@ -1,12 +1,6 @@
-package com.zahwaalviana.simpro.data.model
-
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
-
-@Parcelize
 data class Kemasan(
-    var kemasanId: String? = null,
+    val id: String = "",
     val namaKemasan: String = "",
-    val barangId: String = "",
-    val namaBarangJadi: String = "" // Untuk display, tidak disimpan di Firestore
-) : Parcelable
+    val satuan: String = "",
+    val stok: Double = 0.0
+)

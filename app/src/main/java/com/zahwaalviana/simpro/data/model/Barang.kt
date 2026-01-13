@@ -1,13 +1,22 @@
 package com.zahwaalviana.simpro.data.model
 
-import android.os.Parcelable
-import kotlinx.parcelize.Parcelize
-
-@Parcelize
 data class Barang(
-    var barangId: String? = null,
-    val namaBahanBaku: String = "",
-    val namaBarangJadi: String = "",
-    val total_stok: Int = 0
+    val id: String = "",
+    val namaBarang: String = "",
+    val varian: List<BarangVarian> = emptyList()
+)
 
-) : Parcelable
+data class BarangVarian(
+    val id: String = "",
+    val barangId: String = "",
+    val kemasanId: String = "",
+    val kemasanNama: String = "",
+    val kemasanSatuan: String = "",
+    val shelfLifeHari: Int = 0,
+    val hargaJual: Int = 0
+)
+
+data class BarangWithVarian(
+    val barang: Barang,
+    val varianList: List<BarangVarian>
+)

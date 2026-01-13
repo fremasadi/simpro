@@ -1,1 +1,1 @@
-	2.	SIMPRO – Sistem Informasi Monitoring Produksi
+SIMPRO – Sistem Informasi Monitoring Produksi

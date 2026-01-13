@@ -10,8 +10,6 @@ import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.zahwaalviana.simpro.R
 import com.zahwaalviana.simpro.ui.auth.LoginActivity
-import com.zahwaalviana.simpro.ui.mandor.produksi.ProduksiListFragment
-
 
 class MandorMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -48,12 +46,7 @@ class MandorMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
 
-            R.id.nav_produksi -> {
-                supportActionBar?.title = "Produksi Harian"
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.container_mandor, ProduksiListFragment())
-                    .commit()
-            }
+
 
             R.id.nav_laporan -> {
                 supportActionBar?.title = "Laporan Mandor"
@@ -73,11 +66,5 @@ class MandorMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
         return true
     }
 
-    override fun onBackPressed() {
-        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START)
-        } else {
-            super.onBackPressed()
-        }
-    }
+
 }

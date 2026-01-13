@@ -1,211 +1,161 @@
 package com.zahwaalviana.simpro.ui.admin.kemasan
 
+import android.R
 import android.os.Bundle
-import android.view.MenuItem
 import android.view.View
-import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.firestore.FirebaseFirestore
-import com.zahwaalviana.simpro.data.model.Barang
-import com.zahwaalviana.simpro.data.model.Kemasan
 import com.zahwaalviana.simpro.databinding.ActivityKemasanFormBinding
 
 class KemasanFormActivity : AppCompatActivity() {
+
     private lateinit var binding: ActivityKemasanFormBinding
-    private val db = FirebaseFirestore.getInstance()
-
+    private lateinit var db: FirebaseFirestore
+    private var kemasanId: String? = null
     private var isEditMode = false
-    private var kemasanData: Kemasan? = null
 
-    private var barangList = listOf<Barang>()
-    private var selectedBarangId: String? = null
+    private val satuanList = listOf("Kg", "Liter", "Gram", "Ml", "Pcs", "Box", "Karton", "Botol", "Kaleng")
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityKemasanFormBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        db = FirebaseFirestore.getInstance()
+
         setupToolbar()
+        setupSatuanDropdown()
         checkEditMode()
-        loadBarangList()
         setupListeners()
     }
 
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.setDisplayHomeAsUpEnabled(true)
-        supportActionBar?.setDisplayShowHomeEnabled(true)
+        binding.toolbar.setNavigationOnClickListener { finish() }
+    }
+
+    private fun setupSatuanDropdown() {
+        val adapter = ArrayAdapter(this, R.layout.simple_dropdown_item_1line, satuanList)
+        binding.actvSatuan.setAdapter(adapter)
     }
 
     private fun checkEditMode() {
-        kemasanData = intent.getParcelableExtra("KEMASAN_DATA")
+        kemasanId = intent.getStringExtra("KEMASAN_ID")
+        isEditMode = kemasanId != null
 
-        if (kemasanData != null) {
-            isEditMode = true
+        if (isEditMode) {
             supportActionBar?.title = "Edit Kemasan"
-            selectedBarangId = kemasanData?.barangId
-            populateData(kemasanData!!)
+            loadKemasanData()
         } else {
-            isEditMode = false
             supportActionBar?.title = "Tambah Kemasan"
         }
     }
 
-    private fun loadBarangList() {
+    private fun loadKemasanData() {
         showLoading(true)
-
-        db.collection("master_barang")
+        db.collection("master_kemasan")
+            .document(kemasanId!!)
             .get()
-            .addOnSuccessListener { snapshot ->
+            .addOnSuccessListener { document ->
                 showLoading(false)
-
-                if (snapshot.isEmpty) {
-                    Toast.makeText(this, "Belum ada barang. Tambahkan barang terlebih dahulu.", Toast.LENGTH_LONG).show()
-                    finish()
-                    return@addOnSuccessListener
+                if (document.exists()) {
+                    binding.etNamaKemasan.setText(document.getString("nama_kemasan"))
+                    binding.actvSatuan.setText(document.getString("satuan"), false)
+                    binding.etStok.setText(document.getDouble("stok")?.toString() ?: "0")
                 }
-
-                barangList = snapshot.documents.mapNotNull { doc ->
-                    doc.toObject(Barang::class.java)?.copy(barangId = doc.id)
-                }
-
-                setupBarangSpinner()
             }
             .addOnFailureListener { e ->
                 showLoading(false)
-                Toast.makeText(this, "Gagal memuat data barang: ${e.message}", Toast.LENGTH_SHORT).show()
-                finish()
+                Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
-    }
-
-    private fun setupBarangSpinner() {
-        val barangNames = barangList.map { it.namaBarangJadi }
-
-        val adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_item,
-            barangNames
-        )
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        binding.spinnerBarang.adapter = adapter
-
-        binding.spinnerBarang.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                selectedBarangId = barangList[position].barangId
-            }
-
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                selectedBarangId = null
-            }
-        }
-
-        // Set selected barang jika edit mode
-        if (isEditMode && selectedBarangId != null) {
-            val index = barangList.indexOfFirst { it.barangId == selectedBarangId }
-            if (index != -1) {
-                binding.spinnerBarang.setSelection(index)
-            }
-        }
-    }
-
-    private fun populateData(kemasan: Kemasan) {
-        binding.etNamaKemasan.setText(kemasan.namaKemasan)
     }
 
     private fun setupListeners() {
-        binding.btnSave.setOnClickListener {
+        binding.btnSimpan.setOnClickListener {
             if (validateInput()) {
-                if (isEditMode) {
-                    updateKemasan()
-                } else {
-                    saveKemasan()
-                }
+                saveKemasan()
             }
-        }
-
-        binding.btnCancel.setOnClickListener {
-            finish()
         }
     }
 
     private fun validateInput(): Boolean {
         val namaKemasan = binding.etNamaKemasan.text.toString().trim()
+        val satuan = binding.actvSatuan.text.toString().trim()
+        val stok = binding.etStok.text.toString().trim()
 
         when {
             namaKemasan.isEmpty() -> {
-                binding.etNamaKemasan.error = "Nama kemasan tidak boleh kosong"
-                binding.etNamaKemasan.requestFocus()
+                binding.tilNamaKemasan.error = "Nama kemasan tidak boleh kosong"
                 return false
             }
-            selectedBarangId == null -> {
-                Toast.makeText(this, "Pilih barang terlebih dahulu", Toast.LENGTH_SHORT).show()
+            satuan.isEmpty() -> {
+                binding.tilSatuan.error = "Satuan tidak boleh kosong"
                 return false
+            }
+            stok.isEmpty() -> {
+                binding.tilStok.error = "Stok tidak boleh kosong"
+                return false
+            }
+            else -> {
+                binding.tilNamaKemasan.error = null
+                binding.tilSatuan.error = null
+                binding.tilStok.error = null
+                return true
             }
         }
-
-        return true
     }
 
     private fun saveKemasan() {
         showLoading(true)
 
-        val kemasan = hashMapOf(
-            "namaKemasan" to binding.etNamaKemasan.text.toString().trim(),
-            "barangId" to selectedBarangId!!
+        val namaKemasan = binding.etNamaKemasan.text.toString().trim()
+        val satuan = binding.actvSatuan.text.toString().trim()
+        val stok = binding.etStok.text.toString().toDoubleOrNull() ?: 0.0
+
+        val kemasanData = hashMapOf(
+            "nama_kemasan" to namaKemasan,
+            "satuan" to satuan,
+            "stok" to stok,
+            "updated_at" to System.currentTimeMillis()
         )
 
-        db.collection("master_kemasan")
-            .add(kemasan)
-            .addOnSuccessListener {
-                showLoading(false)
-                Toast.makeText(this, "Kemasan berhasil ditambahkan", Toast.LENGTH_SHORT).show()
-                finish()
-            }
-            .addOnFailureListener { e ->
-                showLoading(false)
-                Toast.makeText(this, "Gagal menambahkan kemasan: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
+        if (isEditMode) {
+            // Update existing data
+            db.collection("master_kemasan")
+                .document(kemasanId!!)
+                .update(kemasanData as Map<String, Any>)
+                .addOnSuccessListener {
+                    showLoading(false)
+                    Toast.makeText(this, "Data berhasil diupdate", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+                .addOnFailureListener { e ->
+                    showLoading(false)
+                    Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+        } else {
+            // Add new data
+            kemasanData["created_at"] = System.currentTimeMillis()
 
-    private fun updateKemasan() {
-        showLoading(true)
-
-        val kemasanId = kemasanData?.kemasanId ?: return
-
-        val updatedKemasan = hashMapOf(
-            "namaKemasan" to binding.etNamaKemasan.text.toString().trim(),
-            "barangId" to selectedBarangId!!
-        )
-
-        db.collection("master_kemasan")
-            .document(kemasanId)
-            .update(updatedKemasan as Map<String, Any>)
-            .addOnSuccessListener {
-                showLoading(false)
-                Toast.makeText(this, "Kemasan berhasil diperbarui", Toast.LENGTH_SHORT).show()
-                finish()
-            }
-            .addOnFailureListener { e ->
-                showLoading(false)
-                Toast.makeText(this, "Gagal memperbarui kemasan: ${e.message}", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun showLoading(isLoading: Boolean) {
-        binding.progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
-        binding.btnSave.isEnabled = !isLoading
-        binding.btnCancel.isEnabled = !isLoading
-        binding.etNamaKemasan.isEnabled = !isLoading
-        binding.spinnerBarang.isEnabled = !isLoading
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == android.R.id.home) {
-            finish()
-            return true
+            db.collection("master_kemasan")
+                .add(kemasanData)
+                .addOnSuccessListener {
+                    showLoading(false)
+                    Toast.makeText(this, "Data berhasil ditambahkan", Toast.LENGTH_SHORT).show()
+                    finish()
+                }
+                .addOnFailureListener { e ->
+                    showLoading(false)
+                    Toast.makeText(this, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
         }
-        return super.onOptionsItemSelected(item)
+    }
+
+    private fun showLoading(show: Boolean) {
+        binding.progressBar.visibility = if (show) View.VISIBLE else View.GONE
+        binding.btnSimpan.isEnabled = !show
     }
 }
