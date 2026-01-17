@@ -1,121 +1,97 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:background="?attr/selectableItemBackground">
+    android:layout_margin="4dp"
+    app:cardElevation="2dp"
+    app:cardCornerRadius="8dp">
 
-    <!-- TR -->
-    <LinearLayout
+    <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:minHeight="56dp"
-        android:gravity="center_vertical"
-        android:background="#FFFFFF">
+        android:padding="16dp">
 
-        <!-- NO -->
         <TextView
-            android:id="@+id/tvNo"
-            android:layout_width="60dp"
-            android:layout_height="match_parent"
-            android:textSize="14sp"
+            android:id="@+id/tvTanggalProduksi"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="15 Januari 2026"
+            android:textSize="18sp"
+            android:textStyle="bold"
             android:textColor="#212121"
-            android:gravity="center"
-            android:paddingVertical="12dp"
-            android:paddingHorizontal="8dp" />
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/ivEdit" />
 
-        <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#E0E0E0"/>
-
-        <!-- Tanggal -->
         <TextView
-            android:id="@+id/tvTanggal"
-            android:layout_width="200dp"
-            android:layout_height="match_parent"
+            android:id="@+id/tvMandor"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mandor: Ahmad Subandi"
             android:textSize="14sp"
-            android:textColor="#212121"
-            android:gravity="center"
-            android:paddingVertical="12dp" />
+            android:textColor="#757575"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/tvTanggalProduksi"
+            app:layout_constraintStart_toStartOf="parent" />
 
-        <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#E0E0E0"/>
-
-        <!-- Nama Barang -->
         <TextView
-            android:id="@+id/tvBarang"
-            android:layout_width="270dp"
-            android:layout_height="match_parent"
-            android:textSize="14sp"
-            android:textColor="#212121"
-            android:gravity="center_vertical"
-            android:paddingVertical="12dp"
-            android:paddingStart="16dp"
-            android:paddingEnd="8dp"
-            android:ellipsize="end"
-            android:maxLines="2" />
+            android:id="@+id/tvTotalBiaya"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Rp 1.500.000"
+            android:textSize="16sp"
+            android:textColor="#E59BA6"
+            android:textStyle="bold"
+            android:layout_marginTop="4dp"
+            app:layout_constraintTop_toBottomOf="@id/tvMandor"
+            app:layout_constraintStart_toStartOf="parent" />
 
-        <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#E0E0E0"/>
-
-        <!-- Produksi -->
         <TextView
-            android:id="@+id/tvProduksi"
-            android:layout_width="150dp"
-            android:layout_height="match_parent"
+            android:id="@+id/tvJumlahItem"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="3 Item Produksi"
             android:textSize="14sp"
-            android:textColor="#212121"
-            android:gravity="center"
-            android:paddingVertical="12dp" />
+            android:textColor="#757575"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/tvTotalBiaya"
+            app:layout_constraintStart_toStartOf="parent" />
 
-        <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#E0E0E0"/>
+        <com.google.android.material.chip.ChipGroup
+            android:id="@+id/chipGroupItems"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:singleLine="true"
+            app:layout_constraintTop_toBottomOf="@id/tvJumlahItem"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Keluar -->
-        <TextView
-            android:id="@+id/tvKeluar"
-            android:layout_width="150dp"
-            android:layout_height="match_parent"
-            android:textSize="14sp"
-            android:textColor="#212121"
-            android:gravity="center"
-            android:paddingVertical="12dp" />
+        <ImageView
+            android:id="@+id/ivEdit"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_edit"
+            android:padding="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Edit"
+            app:tint="#E59BA6"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toStartOf="@id/ivDelete" />
 
-        <View android:layout_width="1dp" android:layout_height="match_parent" android:background="#E0E0E0"/>
+        <ImageView
+            android:id="@+id/ivDelete"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@android:drawable/ic_menu_delete"
+            android:padding="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="Delete"
+            app:tint="#D32F2F"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
 
-        <!-- Aksi -->
-        <LinearLayout
-            android:layout_width="100dp"
-            android:layout_height="match_parent"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:paddingVertical="12dp"
-            android:paddingHorizontal="8dp">
+    </androidx.constraintlayout.widget.ConstraintLayout>
 
-            <ImageButton
-                android:id="@+id/btnEdit"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
-                android:src="@android:drawable/ic_menu_edit"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:tint="#2196F3"
-                android:scaleType="centerInside" />
-
-<!--            <ImageButton-->
-<!--                android:id="@+id/btnDelete"-->
-<!--                android:layout_width="36dp"-->
-<!--                android:layout_height="36dp"-->
-<!--                android:src="@android:drawable/ic_menu_delete"-->
-<!--                android:background="?attr/selectableItemBackgroundBorderless"-->
-<!--                android:tint="#F44336"-->
-<!--                android:scaleType="centerInside"-->
-<!--                android:layout_marginStart="8dp" />-->
-
-        </LinearLayout>
-
-    </LinearLayout>
-
-    <!-- bottom border -->
-    <View
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#E0E0E0" />
-
-</LinearLayout>
+</com.google.android.material.card.MaterialCardView>

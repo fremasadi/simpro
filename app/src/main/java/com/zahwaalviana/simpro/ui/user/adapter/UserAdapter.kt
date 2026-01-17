@@ -1,4 +1,4 @@
-package com.zahwaalviana.simpro.ui.admin.user.adapter
+package com.zahwaalviana.simpro.ui.user.adapter
 
 import android.graphics.Color
 import android.graphics.drawable.GradientDrawable

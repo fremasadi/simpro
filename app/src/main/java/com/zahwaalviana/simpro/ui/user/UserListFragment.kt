@@ -1,23 +1,19 @@
-package com.zahwaalviana.simpro.ui.admin.user
+package com.zahwaalviana.simpro.ui.user
 
 import android.content.Intent
-import android.graphics.drawable.GradientDrawable
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
-import com.zahwaalviana.simpro.R
 import com.zahwaalviana.simpro.data.model.User
 import com.zahwaalviana.simpro.databinding.FragmentUserListBinding
-import com.zahwaalviana.simpro.ui.admin.user.adapter.UserAdapter
+import com.zahwaalviana.simpro.ui.user.adapter.UserAdapter
 
 class UserListFragment : Fragment() {
     private var _binding: FragmentUserListBinding? = null

@@ -1,6 +1,5 @@
 package com.zahwaalviana.simpro.ui.admin
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
@@ -12,11 +11,12 @@ import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.zahwaalviana.simpro.R
-import com.zahwaalviana.simpro.ui.admin.barang.BarangListFragment
-import com.zahwaalviana.simpro.ui.admin.kemasan.KemasanListFragment
+import com.zahwaalviana.simpro.ui.barang.BarangListFragment
+import com.zahwaalviana.simpro.ui.kemasan.KemasanListFragment
 import com.zahwaalviana.simpro.ui.auth.LoginActivity
-import com.zahwaalviana.simpro.ui.admin.user.UserListFragment
+import com.zahwaalviana.simpro.ui.user.UserListFragment
 import androidx.core.graphics.toColorInt
+import com.zahwaalviana.simpro.ui.produksi.ProduksiListFragment
 
 class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -79,6 +79,13 @@ class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
                 supportActionBar?.title = "Master Kemasan"
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.container_admin, KemasanListFragment())
+                    .commit()
+            }
+
+            R.id.nav_produksi -> {   // ← Menu barang
+                supportActionBar?.title = "Produksi"
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.container_admin, ProduksiListFragment())
                     .commit()
             }
 

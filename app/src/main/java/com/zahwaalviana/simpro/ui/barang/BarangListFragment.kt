@@ -1,4 +1,4 @@
-package com.zahwaalviana.simpro.ui.admin.barang
+package com.zahwaalviana.simpro.ui.barang
 
 import android.content.Intent
 import android.os.Bundle
@@ -16,7 +16,7 @@ import com.zahwaalviana.simpro.data.model.Barang
 import com.zahwaalviana.simpro.data.model.BarangVarian
 import com.zahwaalviana.simpro.data.model.BarangWithVarian
 import com.zahwaalviana.simpro.databinding.FragmentBarangListBinding
-import com.zahwaalviana.simpro.ui.admin.barang.adapter.BarangAdapter
+import com.zahwaalviana.simpro.ui.barang.adapter.BarangAdapter
 
 class BarangListFragment : Fragment() {
 

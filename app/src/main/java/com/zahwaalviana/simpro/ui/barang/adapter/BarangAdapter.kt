@@ -1,4 +1,4 @@
-package com.zahwaalviana.simpro.ui.admin.barang.adapter
+package com.zahwaalviana.simpro.ui.barang.adapter
 
 import android.content.res.ColorStateList
 import android.graphics.Color

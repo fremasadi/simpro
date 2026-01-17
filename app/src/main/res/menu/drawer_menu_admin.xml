@@ -25,6 +25,11 @@
             android:icon="@android:drawable/ic_menu_manage"
             android:title="Kelola Pengguna" />
 
+        <item
+            android:id="@+id/nav_produksi"
+            android:icon="@drawable/ic_produksi"
+            android:title="Produksi Harian" />
+
     </group>
 
     <item android:title="Akun">

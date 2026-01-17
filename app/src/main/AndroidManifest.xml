@@ -39,17 +39,17 @@
             android:name=".ui.mandor.MandorMainActivity"
             android:exported="false" />
 
-        <activity android:name=".ui.admin.user.UserFormActivity" android:exported="false" />
+        <activity android:name=".ui.user.UserFormActivity" android:exported="false" />
 
         <activity
-            android:name=".ui.admin.barang.BarangFormActivity"
+            android:name=".ui.barang.BarangFormActivity"
             android:exported="false"             />
         <activity
-            android:name=".ui.admin.kemasan.KemasanFormActivity"
+            android:name=".ui.kemasan.KemasanFormActivity"
             android:exported="false"/>
 
         <activity
-            android:name=".ui.mandor.produksi.ProdukFormActivity"
+            android:name=".ui.produksi.ProduksiFormActivity"
             android:exported="false"/>
 
     </application>

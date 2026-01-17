@@ -1,4 +1,4 @@
-package com.zahwaalviana.simpro.ui.admin.kemasan.adapter
+package com.zahwaalviana.simpro.ui.kemasan.adapter
 
 import Kemasan
 import android.view.LayoutInflater

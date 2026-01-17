@@ -1,4 +1,4 @@
-package com.zahwaalviana.simpro.ui.admin.kemasan
+package com.zahwaalviana.simpro.ui.kemasan
 
 import android.R
 import android.os.Bundle

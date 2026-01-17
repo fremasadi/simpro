@@ -1,6 +1,7 @@
-package com.zahwaalviana.simpro.ui.admin.user
+package com.zahwaalviana.simpro.ui.user
 
 import android.os.Bundle
+import android.util.Patterns
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
@@ -118,7 +119,7 @@ class UserFormActivity : AppCompatActivity() {
         if (email.isEmpty()) {
             tilEmail.error = "Email wajib diisi"
             isValid = false
-        } else if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
+        } else if (!Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             tilEmail.error = "Format email tidak valid"
             isValid = false
         } else {

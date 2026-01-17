@@ -1,18 +1,27 @@
 package com.zahwaalviana.simpro.data.model
 
-import android.os.Parcelable
-import com.google.firebase.Timestamp
-import kotlinx.parcelize.Parcelize
-
-@Parcelize
 data class Produksi(
-    var produksiId: String? = null,
-    var tanggal: Timestamp? = null,
-    var barangId: String = "",
-    var namaBarangJadi: String = "",
-    var jumlah_produksi: Int = 0,
-    var jumlah_keluar: Int = 0,
-    var mandorId: String? = null // optional, bisa isi user id
-) : Parcelable {
-    fun net(): Int = jumlah_produksi - jumlah_keluar
-}
+    val id: String = "",
+    val tanggalProduksi: Long = 0L, // timestamp
+    val mandorId: String = "",
+    val mandorName: String = "",
+    val totalBiayaProduksi: Int = 0,
+    val items: List<ProduksiItem> = emptyList()
+)
+
+data class ProduksiItem(
+    val id: String = "",
+    val produksiId: String = "",
+    val varianId: String = "",
+    val barangNama: String = "",
+    val kemasanNama: String = "",
+    val kemasanSatuan: String = "",
+    val jumlahProduksi: Int = 0,
+    val expiredAt: Long = 0L, // timestamp: tanggal_produksi + shelf_life_hari
+    val shelfLifeHari: Int = 0
+)
+
+data class ProduksiWithItems(
+    val produksi: Produksi,
+    val items: List<ProduksiItem>
+)

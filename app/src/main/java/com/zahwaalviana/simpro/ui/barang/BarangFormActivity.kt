@@ -1,7 +1,8 @@
-package com.zahwaalviana.simpro.ui.admin.barang
+package com.zahwaalviana.simpro.ui.barang
 
 import Kemasan
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.widget.ArrayAdapter
@@ -78,14 +79,14 @@ class BarangFormActivity : AppCompatActivity() {
                 showLoading(false)
 
                 // Debug log
-                android.util.Log.d("BarangForm", "Loaded ${kemasanList.size} kemasan: ${kemasanList.map { it.namaKemasan }}")
+                Log.d("BarangForm", "Loaded ${kemasanList.size} kemasan: ${kemasanList.map { it.namaKemasan }}")
 
                 onComplete()
             }
             .addOnFailureListener { e ->
                 showLoading(false)
                 Toast.makeText(this, "Error loading kemasan: ${e.message}", Toast.LENGTH_SHORT).show()
-                android.util.Log.e("BarangForm", "Error loading kemasan", e)
+                Log.e("BarangForm", "Error loading kemasan", e)
             }
     }
 
@@ -178,13 +179,13 @@ class BarangFormActivity : AppCompatActivity() {
 
         // Setup kemasan dropdown - pastikan kemasanList sudah terisi
         if (kemasanList.isEmpty()) {
-            android.util.Log.e("BarangForm", "kemasanList is empty when adding varian view!")
+            Log.e("BarangForm", "kemasanList is empty when adding varian view!")
             Toast.makeText(this, "Data kemasan belum dimuat", Toast.LENGTH_SHORT).show()
             return
         }
 
         val kemasanNames = kemasanList.map { "${it.namaKemasan} (${it.satuan})" }
-        android.util.Log.d("BarangForm", "Setting up dropdown with ${kemasanNames.size} items: $kemasanNames")
+        Log.d("BarangForm", "Setting up dropdown with ${kemasanNames.size} items: $kemasanNames")
 
         val adapterKemasan = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, kemasanNames)
         actvKemasan.setAdapter(adapterKemasan)

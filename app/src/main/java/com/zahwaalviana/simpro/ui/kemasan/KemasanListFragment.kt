@@ -1,4 +1,4 @@
-package com.zahwaalviana.simpro.ui.admin.kemasan
+package com.zahwaalviana.simpro.ui.kemasan
 
 import Kemasan
 import android.content.Intent
@@ -13,7 +13,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
-import com.zahwaalviana.simpro.ui.admin.kemasan.adapter.KemasanAdapter
+import com.zahwaalviana.simpro.ui.kemasan.adapter.KemasanAdapter
 import com.zahwaalviana.simpro.databinding.FragmentKemasanListBinding
 
 
