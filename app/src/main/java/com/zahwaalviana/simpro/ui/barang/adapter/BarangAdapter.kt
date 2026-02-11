@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
+import com.zahwaalviana.simpro.data.model.BarangVarian
 import com.zahwaalviana.simpro.data.model.BarangWithVarian
 import com.zahwaalviana.simpro.databinding.ItemBarangBinding
 
@@ -15,7 +16,8 @@ import java.util.Locale
 class BarangAdapter(
     private val barangList: List<BarangWithVarian>,
     private val onEditClick: (BarangWithVarian) -> Unit,
-    private val onDeleteClick: (BarangWithVarian) -> Unit
+    private val onDeleteClick: (BarangWithVarian) -> Unit,
+    private val onVarianClick: (BarangVarian, String) -> Unit = { _, _ -> }
 ) : RecyclerView.Adapter<BarangAdapter.BarangViewHolder>() {
 
     private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
@@ -34,15 +36,17 @@ class BarangAdapter(
                 chipGroupVarian.removeAllViews()
 
                 // Add chips for each varian
+                val barangNama = barangWithVarian.barang.namaBarang
                 barangWithVarian.varianList.take(3).forEach { varian ->
                     val chip = Chip(binding.root.context).apply {
-                        text = "${varian.kemasanNama} - ${currencyFormat.format(varian.hargaJual)}"
+                        text = "${varian.kemasanNama} - ${currencyFormat.format(varian.hargaJual)} (Stok: ${varian.stok})"
                         chipBackgroundColor = ColorStateList.valueOf(
                             Color.parseColor("#FFF0F3")
                         )
                         setTextColor(Color.parseColor("#E59BA6"))
-                        isClickable = false
+                        isClickable = true
                         isCheckable = false
+                        setOnClickListener { onVarianClick(varian, barangNama) }
                     }
                     chipGroupVarian.addView(chip)
                 }

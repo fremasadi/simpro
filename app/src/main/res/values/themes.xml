@@ -19,6 +19,15 @@
 
         <!-- Font warna gelap biar kontras -->
         <item name="android:textColor">#333333</item>
+
+        <!-- HINT UNFOCUSED -->
+        <item name="colorOnSurfaceVariant">#000000</item>
+
+        <!-- TEXT ISI -->
+        <item name="colorOnSurface">#000000</item>
+
+        <!-- BORDER -->
+        <item name="colorOutline">#000000</item>
     </style>
 
     <style name="Theme.SIMPRO" parent="Base.Theme.SIMPRO" />

@@ -5,7 +5,6 @@ data class Produksi(
     val tanggalProduksi: Long = 0L, // timestamp
     val mandorId: String = "",
     val mandorName: String = "",
-    val totalBiayaProduksi: Int = 0,
     val items: List<ProduksiItem> = emptyList()
 )
 

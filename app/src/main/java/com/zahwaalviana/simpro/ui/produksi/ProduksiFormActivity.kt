@@ -12,6 +12,8 @@ import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.zahwaalviana.simpro.R
 import com.zahwaalviana.simpro.data.model.BarangVarian
@@ -35,20 +37,35 @@ class ProduksiFormActivity : AppCompatActivity() {
     private var selectedDate: Calendar = Calendar.getInstance()
     private val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
 
+    // Track old item data for stok calculation on edit: itemId -> (varianId, jumlah)
+    private val oldItemDataMap = mutableMapOf<String, Pair<String, Int>>()
+
+    private var userRole: String = "admin"
+    private val currentUserId: String get() = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityProduksiFormBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         db = FirebaseFirestore.getInstance()
+        userRole = intent.getStringExtra("USER_ROLE") ?: "admin"
 
         setupToolbar()
         setupListeners()
 
-        // Load data sequentially
-        loadMandorData {
+        if (userRole == "mandor") {
+            // Mandor: hide dropdown, auto-set mandor to self
+            binding.tilMandor.visibility = View.GONE
             loadVarianData {
                 checkEditMode()
+            }
+        } else {
+            // Admin: show dropdown, load mandor list
+            loadMandorData {
+                loadVarianData {
+                    checkEditMode()
+                }
             }
         }
     }
@@ -212,7 +229,6 @@ class ProduksiFormActivity : AppCompatActivity() {
                     val mandorName = mandorList.find { it.first == mandorId }?.second ?: ""
                     binding.actvMandor.setText(mandorName, false)
 
-                    binding.etTotalBiaya.setText(doc.getLong("total_biaya_produksi")?.toString() ?: "0")
 
                     loadItemsData()
                 } else {
@@ -238,6 +254,9 @@ class ProduksiFormActivity : AppCompatActivity() {
                         val varianId = doc.getString("varian_id") ?: ""
                         val jumlah = doc.getLong("jumlah_produksi")?.toInt() ?: 0
                         val itemId = doc.id
+
+                        // Track old data for stok diff calculation
+                        oldItemDataMap[itemId] = Pair(varianId, jumlah)
 
                         addItemView(itemId, varianId, jumlah)
                     }
@@ -331,7 +350,23 @@ class ProduksiFormActivity : AppCompatActivity() {
                 updateItemNumbers()
 
                 if (itemId.isNotEmpty()) {
-                    db.collection("produksi_items").document(itemId).delete()
+                    val oldData = oldItemDataMap[itemId]
+                    val batch = db.batch()
+                    batch.delete(db.collection("produksi_items").document(itemId))
+
+                    // Decrement stok for removed item
+                    if (oldData != null) {
+                        val (oldVarianId, oldJumlah) = oldData
+                        if (oldVarianId.isNotEmpty() && oldJumlah > 0) {
+                            batch.update(
+                                db.collection("barang_varian").document(oldVarianId),
+                                "stok", FieldValue.increment(-oldJumlah.toLong())
+                            )
+                        }
+                    }
+
+                    batch.commit()
+                    oldItemDataMap.remove(itemId)
                 }
             } else {
                 Toast.makeText(this, "Minimal harus ada 1 item", Toast.LENGTH_SHORT).show()
@@ -381,15 +416,12 @@ class ProduksiFormActivity : AppCompatActivity() {
             return false
         }
 
-        if (binding.actvMandor.text.toString().isEmpty()) {
+        if (userRole == "admin" && binding.actvMandor.text.toString().isEmpty()) {
             Toast.makeText(this, "Mandor harus dipilih", Toast.LENGTH_SHORT).show()
             return false
         }
 
-        if (binding.etTotalBiaya.text.toString().isEmpty()) {
-            Toast.makeText(this, "Total biaya harus diisi", Toast.LENGTH_SHORT).show()
-            return false
-        }
+
 
         if (itemViews.isEmpty()) {
             Toast.makeText(this, "Minimal harus ada 1 item produksi", Toast.LENGTH_SHORT).show()
@@ -417,14 +449,16 @@ class ProduksiFormActivity : AppCompatActivity() {
     private fun saveProduksi() {
         showLoading(true)
 
-        val mandorName = binding.actvMandor.text.toString()
-        val mandorId = mandorMap[mandorName] ?: ""
-        val totalBiaya = binding.etTotalBiaya.text.toString().toIntOrNull() ?: 0
+        val mandorId = if (userRole == "mandor") {
+            currentUserId
+        } else {
+            val mandorName = binding.actvMandor.text.toString()
+            mandorMap[mandorName] ?: ""
+        }
 
         val produksiData = hashMapOf(
             "tanggal_produksi" to selectedDate.timeInMillis,
             "mandor_id" to mandorId,
-            "total_biaya_produksi" to totalBiaya,
             "updated_at" to System.currentTimeMillis()
         )
 
@@ -457,6 +491,9 @@ class ProduksiFormActivity : AppCompatActivity() {
     private fun saveAllItems(produksiId: String) {
         val batch = db.batch()
 
+        // Accumulate stok changes per varian: varianId -> total increment
+        val stokIncrements = mutableMapOf<String, Long>()
+
         itemViews.forEach { itemView ->
             val itemId = itemView.tag as? String
             val actvVarian = itemView.findViewById<AutoCompleteTextView>(R.id.actvVarian)
@@ -483,11 +520,40 @@ class ProduksiFormActivity : AppCompatActivity() {
                 if (!itemId.isNullOrEmpty()) {
                     val docRef = db.collection("produksi_items").document(itemId)
                     batch.update(docRef, itemData as Map<String, Any>)
+
+                    // Edit mode: calculate stok diff
+                    val oldData = oldItemDataMap[itemId]
+                    if (oldData != null) {
+                        val (oldVarianId, oldJumlah) = oldData
+                        if (oldVarianId == varian.id) {
+                            // Same varian, apply diff only
+                            val diff = jumlah - oldJumlah
+                            stokIncrements[varian.id] = (stokIncrements[varian.id] ?: 0L) + diff
+                        } else {
+                            // Varian changed: decrement old, increment new
+                            stokIncrements[oldVarianId] = (stokIncrements[oldVarianId] ?: 0L) - oldJumlah
+                            stokIncrements[varian.id] = (stokIncrements[varian.id] ?: 0L) + jumlah
+                        }
+                    } else {
+                        // Existing item but no old data (shouldn't happen, but safe fallback)
+                        stokIncrements[varian.id] = (stokIncrements[varian.id] ?: 0L) + jumlah
+                    }
                 } else {
                     itemData["created_at"] = System.currentTimeMillis()
                     val docRef = db.collection("produksi_items").document()
                     batch.set(docRef, itemData)
+
+                    // New item: full increment
+                    stokIncrements[varian.id] = (stokIncrements[varian.id] ?: 0L) + jumlah
                 }
+            }
+        }
+
+        // Apply stok increments to batch
+        stokIncrements.forEach { (varianId, increment) ->
+            if (increment != 0L) {
+                val varianRef = db.collection("barang_varian").document(varianId)
+                batch.update(varianRef, "stok", FieldValue.increment(increment))
             }
         }
 

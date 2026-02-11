@@ -52,6 +52,12 @@
             android:name=".ui.produksi.ProduksiFormActivity"
             android:exported="false"/>
 
+        <activity android:name=".ui.pengeluaran.PengeluaranFormActivity"
+            android:exported="false"/>
+
+        <activity android:name=".ui.penjualan.PenjualanFormActivity"
+            android:exported="false"/>
+
     </application>
 
 </manifest>

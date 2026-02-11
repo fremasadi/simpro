@@ -9,6 +9,8 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
@@ -21,6 +23,18 @@ import com.zahwaalviana.simpro.ui.produksi.adapter.ProduksiAdapter
 
 class ProduksiListFragment : Fragment() {
 
+    companion object {
+        private const val ARG_USER_ROLE = "user_role"
+
+        fun newInstance(role: String): ProduksiListFragment {
+            return ProduksiListFragment().apply {
+                arguments = Bundle().apply {
+                    putString(ARG_USER_ROLE, role)
+                }
+            }
+        }
+    }
+
     private var _binding: FragmentProduksiListBinding? = null
     private val binding get() = _binding!!
 
@@ -28,6 +42,14 @@ class ProduksiListFragment : Fragment() {
     private lateinit var adapter: ProduksiAdapter
     private var produksiListener: ListenerRegistration? = null
     private val produksiList = mutableListOf<ProduksiWithItems>()
+    private val userRole: String get() = arguments?.getString(ARG_USER_ROLE) ?: "mandor"
+    private val currentUserId: String get() = FirebaseAuth.getInstance().currentUser?.uid ?: ""
+
+    private fun setupRoleUI() {
+        binding.fabAdd.visibility =
+            if (userRole == "mandor") View.VISIBLE
+            else View.GONE
+    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -46,6 +68,7 @@ class ProduksiListFragment : Fragment() {
         setupToolbar()
         setupRecyclerView()
         setupListeners()
+        setupRoleUI()
     }
 
     override fun onResume() {
@@ -63,6 +86,7 @@ class ProduksiListFragment : Fragment() {
             onEditClick = { produksiWithItems ->
                 val intent = Intent(requireContext(), ProduksiFormActivity::class.java)
                 intent.putExtra("PRODUKSI_ID", produksiWithItems.produksi.id)
+                intent.putExtra("USER_ROLE", userRole)
                 startActivity(intent)
             },
             onDeleteClick = { produksiWithItems ->
@@ -76,7 +100,9 @@ class ProduksiListFragment : Fragment() {
 
     private fun setupListeners() {
         binding.fabAdd.setOnClickListener {
-            startActivity(Intent(requireContext(), ProduksiFormActivity::class.java))
+            val intent = Intent(requireContext(), ProduksiFormActivity::class.java)
+            intent.putExtra("USER_ROLE", userRole)
+            startActivity(intent)
         }
 
         binding.swipeRefresh.setOnRefreshListener {
@@ -98,17 +124,26 @@ class ProduksiListFragment : Fragment() {
                 }
 
                 produksiList.clear()
-                val loadedProduksi = snapshots?.documents?.size ?: 0
+
+                // Filter: mandor hanya melihat data miliknya
+                val docs = if (userRole == "mandor") {
+                    snapshots?.documents?.filter { it.getString("mandor_id") == currentUserId }
+                } else {
+                    snapshots?.documents
+                } ?: emptyList()
+
+                val loadedProduksi = docs.size
                 var processedProduksi = 0
 
                 if (loadedProduksi == 0) {
                     showLoading(false)
                     binding.swipeRefresh.isRefreshing = false
+                    adapter.notifyDataSetChanged()
                     updateEmptyState()
                     return@addSnapshotListener
                 }
 
-                snapshots?.documents?.forEach { doc ->
+                docs.forEach { doc ->
                     // Load mandor data
                     val mandorId = doc.getString("mandor_id") ?: ""
 
@@ -120,8 +155,6 @@ class ProduksiListFragment : Fragment() {
                                 tanggalProduksi = doc.getLong("tanggal_produksi") ?: 0L,
                                 mandorId = mandorId,
                                 mandorName = mandorDoc.getString("name") ?: "Unknown",
-                                totalBiayaProduksi = doc.getLong("total_biaya_produksi")?.toInt()
-                                    ?: 0
                             )
 
                             // Load items for this produksi
@@ -254,7 +287,19 @@ class ProduksiListFragment : Fragment() {
             .get()
             .addOnSuccessListener { itemDocs ->
                 val batch = db.batch()
+
+                // Decrement stok for each item before deleting
                 itemDocs.documents.forEach { doc ->
+                    val varianId = doc.getString("varian_id") ?: ""
+                    val jumlah = doc.getLong("jumlah_produksi")?.toInt() ?: 0
+
+                    if (varianId.isNotEmpty() && jumlah > 0) {
+                        batch.update(
+                            db.collection("barang_varian").document(varianId),
+                            "stok", FieldValue.increment(-jumlah.toLong())
+                        )
+                    }
+
                     batch.delete(doc.reference)
                 }
 

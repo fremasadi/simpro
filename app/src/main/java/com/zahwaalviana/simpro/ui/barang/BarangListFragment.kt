@@ -1,22 +1,31 @@
 package com.zahwaalviana.simpro.ui.barang
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ProgressBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
+import com.zahwaalviana.simpro.R
 import com.zahwaalviana.simpro.data.model.Barang
 import com.zahwaalviana.simpro.data.model.BarangVarian
 import com.zahwaalviana.simpro.data.model.BarangWithVarian
 import com.zahwaalviana.simpro.databinding.FragmentBarangListBinding
 import com.zahwaalviana.simpro.ui.barang.adapter.BarangAdapter
+import com.zahwaalviana.simpro.ui.barang.adapter.StokDetailAdapter
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 class BarangListFragment : Fragment() {
 
@@ -62,6 +71,9 @@ class BarangListFragment : Fragment() {
             },
             onDeleteClick = { barangWithVarian ->
                 showDeleteConfirmation(barangWithVarian)
+            },
+            onVarianClick = { varian, barangNama ->
+                showStokDetailDialog(varian, barangNama)
             }
         )
 
@@ -85,6 +97,7 @@ class BarangListFragment : Fragment() {
 //        loadBarangData()
 //    }
 
+    @SuppressLint("NotifyDataSetChanged")
     private fun loadBarangData() {
         showLoading(true)
 
@@ -160,7 +173,8 @@ class BarangListFragment : Fragment() {
                                 kemasanNama = kemasanDoc.getString("nama_kemasan") ?: "",
                                 kemasanSatuan = kemasanDoc.getString("satuan") ?: "",
                                 shelfLifeHari = varianDoc.getLong("shelf_life_hari")?.toInt() ?: 0,
-                                hargaJual = varianDoc.getLong("harga_jual")?.toInt() ?: 0
+                                hargaJual = varianDoc.getLong("harga_jual")?.toInt() ?: 0,
+                                stok = varianDoc.getLong("stok")?.toInt() ?: 0
                             )
                             varianList.add(varian)
                             processedVarian++
@@ -181,6 +195,109 @@ class BarangListFragment : Fragment() {
                 callback(emptyList())
             }
     }
+
+    @SuppressLint("SetTextI18n", "NotifyDataSetChanged")
+    private fun showStokDetailDialog(varian: BarangVarian, barangNama: String) {
+        val dialogView = LayoutInflater.from(requireContext())
+            .inflate(R.layout.dialog_stok_detail, null)
+
+        val tvTotalStok = dialogView.findViewById<TextView>(R.id.tvTotalStok)
+        val tvEmpty = dialogView.findViewById<TextView>(R.id.tvEmpty)
+        val progressBar = dialogView.findViewById<ProgressBar>(R.id.progressBar)
+        val rvStokDetail = dialogView.findViewById<RecyclerView>(R.id.rvStokDetail)
+
+        tvTotalStok.text = "Total Stok: ${varian.stok} ${varian.kemasanSatuan}"
+
+        val detailList = mutableListOf<StokDetailItem>()
+        val detailAdapter = StokDetailAdapter(detailList)
+        rvStokDetail.layoutManager = LinearLayoutManager(requireContext())
+        rvStokDetail.adapter = detailAdapter
+
+        val dialog = AlertDialog.Builder(requireContext())
+            .setTitle("$barangNama - ${varian.kemasanNama}")
+            .setView(dialogView)
+            .setPositiveButton("Tutup", null)
+            .show()
+
+        // Load produksi_items for this varian
+        progressBar.visibility = View.VISIBLE
+        db.collection("produksi_items")
+            .whereEqualTo("varian_id", varian.id)
+            .get()
+            .addOnSuccessListener { itemDocs ->
+                if (itemDocs.isEmpty) {
+                    progressBar.visibility = View.GONE
+                    tvEmpty.visibility = View.VISIBLE
+                    return@addOnSuccessListener
+                }
+
+                val totalItems = itemDocs.size()
+                var processedItems = 0
+
+                itemDocs.documents.forEach { itemDoc ->
+                    val produksiId = itemDoc.getString("produksi_id") ?: ""
+                    val jumlah = itemDoc.getLong("jumlah_produksi")?.toInt() ?: 0
+
+                    // Load produksi to get tanggal and mandor_id
+                    db.collection("produksi").document(produksiId)
+                        .get()
+                        .addOnSuccessListener { produksiDoc ->
+                            val tanggal = produksiDoc.getLong("tanggal_produksi") ?: 0L
+                            val mandorId = produksiDoc.getString("mandor_id") ?: ""
+
+                            // Load mandor name
+                            db.collection("users").document(mandorId)
+                                .get()
+                                .addOnSuccessListener { mandorDoc ->
+                                    val mandorName = mandorDoc.getString("name") ?: "Unknown"
+                                    val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+                                    val tanggalStr = dateFormat.format(Date(tanggal))
+
+                                    detailList.add(
+                                        StokDetailItem(
+                                            mandorName = mandorName,
+                                            tanggal = tanggalStr,
+                                            jumlah = jumlah
+                                        )
+                                    )
+                                    processedItems++
+
+                                    if (processedItems == totalItems) {
+                                        progressBar.visibility = View.GONE
+                                        detailAdapter.notifyDataSetChanged()
+                                        if (detailList.isEmpty()) {
+                                            tvEmpty.visibility = View.VISIBLE
+                                        }
+                                    }
+                                }
+                                .addOnFailureListener {
+                                    processedItems++
+                                    if (processedItems == totalItems) {
+                                        progressBar.visibility = View.GONE
+                                        detailAdapter.notifyDataSetChanged()
+                                    }
+                                }
+                        }
+                        .addOnFailureListener {
+                            processedItems++
+                            if (processedItems == totalItems) {
+                                progressBar.visibility = View.GONE
+                                detailAdapter.notifyDataSetChanged()
+                            }
+                        }
+                }
+            }
+            .addOnFailureListener {
+                progressBar.visibility = View.GONE
+                tvEmpty.visibility = View.VISIBLE
+            }
+    }
+
+    data class StokDetailItem(
+        val mandorName: String,
+        val tanggal: String,
+        val jumlah: Int
+    )
 
     private fun showDeleteConfirmation(barangWithVarian: BarangWithVarian) {
         AlertDialog.Builder(requireContext())

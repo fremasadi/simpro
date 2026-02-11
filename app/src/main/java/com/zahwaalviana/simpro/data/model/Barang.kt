@@ -13,7 +13,8 @@ data class BarangVarian(
     val kemasanNama: String = "",
     val kemasanSatuan: String = "",
     val shelfLifeHari: Int = 0,
-    val hargaJual: Int = 0
+    val hargaJual: Int = 0,
+    val stok: Int = 0
 )
 
 data class BarangWithVarian(

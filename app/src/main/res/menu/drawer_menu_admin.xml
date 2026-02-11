@@ -28,7 +28,17 @@
         <item
             android:id="@+id/nav_produksi"
             android:icon="@drawable/ic_produksi"
-            android:title="Produksi Harian" />
+            android:title="Produksi" />
+
+        <item
+            android:id="@+id/nav_pengeluran"
+            android:icon="@drawable/ic_produksi"
+            android:title="Pengeluaran" />
+
+        <item
+            android:id="@+id/nav_penjualan"
+            android:icon="@drawable/ic_laporan"
+            android:title="POS / Kasir" />
 
     </group>
 

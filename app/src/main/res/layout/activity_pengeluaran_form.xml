@@ -1,11 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#FFFFFF"
     android:fitsSystemWindows="true">
 
+    <!-- APP BAR -->
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
@@ -17,13 +19,12 @@
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
             android:background="#E59BA6"
-            android:elevation="4dp"
-            app:title="Form Produksi"
+            app:title="Form Pengeluaran"
             app:titleTextColor="#FFFFFF"
             app:navigationIcon="?attr/homeAsUpIndicator" />
-
     </com.google.android.material.appbar.AppBarLayout>
 
+    <!-- CONTENT -->
     <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -36,107 +37,107 @@
             android:orientation="vertical"
             android:padding="16dp">
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Informasi Produksi"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="#E59BA6"
-                android:layout_marginBottom="8dp" />
-
+            <!-- MASTER PENGELUARAN -->
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilTanggalProduksi"
+                android:id="@+id/tilMasterPengeluaran"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:hint="Tanggal Produksi"
-                app:boxStrokeColor="#E59BA6"
-                app:hintTextColor="#E59BA6"
-                app:endIconMode="custom"
-                app:endIconDrawable="@android:drawable/ic_menu_my_calendar"
-                app:endIconTint="#E59BA6"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+                android:hint="Jenis Pengeluaran"
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/etTanggalProduksi"
+                app:hintTextColor="@color/hint_black_force"
+                app:boxStrokeColor="@color/black"
+                >
+
+                <AutoCompleteTextView
+                    android:id="@+id/actvMasterPengeluaran"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="none"
-                    android:focusable="false"
-                    android:clickable="true" />
-
+                    android:textColor="@color/black"
+                    android:inputType="text"/>
             </com.google.android.material.textfield.TextInputLayout>
 
+
+            <!-- TANGGAL -->
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilMandor"
+                android:id="@+id/tilTanggal"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:hint="Pilih Mandor"
-                app:boxStrokeColor="#E59BA6"
-                app:hintTextColor="#E59BA6"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu">
+                app:hintTextColor="@color/black"
+                android:hint="Tanggal"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
-                <AutoCompleteTextView
-                    android:id="@+id/actvMandor"
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etTanggal"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:inputType="none" />
-
+                    android:focusable="false"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/white"
+                    android:clickable="true" />
             </com.google.android.material.textfield.TextInputLayout>
 
-            <TextView
+            <!-- BIAYA -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilBiaya"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Item Produksi"
-                android:textSize="16sp"
-                android:textStyle="bold"
-                android:textColor="#E59BA6"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="8dp" />
+                android:layout_marginTop="16dp"
+                android:hint="Biaya"
+                android:textColor="@color/black"
 
-            <LinearLayout
-                android:id="@+id/llItemContainer"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etBiaya"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/white"
+                    android:inputType="number" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- KETERANGAN -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilKeterangan"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical" />
+                android:layout_marginTop="16dp"
+                android:textColor="@color/black"
 
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/btnTambahItem"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="8dp"
-                android:text="+ Tambah Item Produksi"
-                android:textSize="14sp"
-                app:backgroundTint="#FFFFFF"
-                app:strokeColor="#E59BA6"
-                app:strokeWidth="1dp"
-                app:cornerRadius="8dp"
-                android:textColor="#E59BA6"
-                style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
+                android:hint="Keterangan"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etKeterangan"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:minLines="3"
+                    android:textColor="@color/black"
+                    android:textColorHint="@color/white"
+                    android:gravity="top" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- SIMPAN -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSimpan"
                 android:layout_width="match_parent"
-                android:layout_height="60dp"
+                android:layout_height="56dp"
                 android:layout_marginTop="24dp"
                 android:text="Simpan"
-                android:textSize="16sp"
-                android:textStyle="bold"
                 app:backgroundTint="#E59BA6"
                 app:cornerRadius="8dp" />
 
         </LinearLayout>
-
     </ScrollView>
 
+    <!-- LOADING -->
     <ProgressBar
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:visibility="gone"
-        android:indeterminateTint="#E59BA6"
-        android:elevation="8dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"

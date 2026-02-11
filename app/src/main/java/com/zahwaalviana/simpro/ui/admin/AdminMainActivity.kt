@@ -16,6 +16,8 @@ import com.zahwaalviana.simpro.ui.kemasan.KemasanListFragment
 import com.zahwaalviana.simpro.ui.auth.LoginActivity
 import com.zahwaalviana.simpro.ui.user.UserListFragment
 import androidx.core.graphics.toColorInt
+import com.zahwaalviana.simpro.ui.pengeluaran.PengeluaranListFragment
+import com.zahwaalviana.simpro.ui.penjualan.PenjualanListFragment
 import com.zahwaalviana.simpro.ui.produksi.ProduksiListFragment
 
 class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -82,10 +84,24 @@ class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
                     .commit()
             }
 
-            R.id.nav_produksi -> {   // ← Menu barang
+            R.id.nav_produksi -> {
                 supportActionBar?.title = "Produksi"
                 supportFragmentManager.beginTransaction()
-                    .replace(R.id.container_admin, ProduksiListFragment())
+                    .replace(R.id.container_admin, ProduksiListFragment.newInstance("admin"))
+                    .commit()
+            }
+
+            R.id.nav_pengeluran -> {
+                supportActionBar?.title = "Pengeluaran"
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.container_admin, PengeluaranListFragment())
+                    .commit()
+            }
+
+            R.id.nav_penjualan -> {
+                supportActionBar?.title = "POS / Kasir"
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.container_admin, PenjualanListFragment())
                     .commit()
             }
 

@@ -31,7 +31,6 @@ class ProduksiAdapter(
 
                 tvTanggalProduksi.text = dateFormat.format(Date(produksi.tanggalProduksi))
                 tvMandor.text = "Mandor: ${produksi.mandorName}"
-                tvTotalBiaya.text = currencyFormat.format(produksi.totalBiayaProduksi)
                 tvJumlahItem.text = "${items.size} Item Produksi"
 
                 // Clear previous chips
