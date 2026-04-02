@@ -8,7 +8,6 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.Query
 import com.zahwaalviana.simpro.R
 import com.zahwaalviana.simpro.databinding.FragmentDashboardMandorBinding
 import java.text.SimpleDateFormat
@@ -37,7 +36,8 @@ class DashboardMandorFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
 
-        val email = FirebaseAuth.getInstance().currentUser?.email ?: ""
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val email = currentUser?.email ?: ""
         if (email.isNotEmpty()) {
             val name = email.substringBefore("@").replaceFirstChar { it.uppercase() }
             binding.tvGreetingName.text = "Selamat Datang, $name!"
@@ -45,10 +45,12 @@ class DashboardMandorFragment : Fragment() {
         binding.tvGreetingDate.text = dateFormat.format(Date())
 
         showLoading(true)
-        loadProduksiStats()
+        val uid = currentUser?.uid ?: ""
+        if (uid.isNotEmpty()) loadProduksiStats(uid)
+        else showLoading(false)
     }
 
-    private fun loadProduksiStats() {
+    private fun loadProduksiStats(mandorId: String) {
         val startOfDay = Calendar.getInstance().apply {
             set(Calendar.HOUR_OF_DAY, 0)
             set(Calendar.MINUTE, 0)
@@ -65,17 +67,20 @@ class DashboardMandorFragment : Fragment() {
         }.timeInMillis
 
         db.collection("produksi")
-            .orderBy("tanggalProduksi", Query.Direction.DESCENDING)
+            .whereEqualTo("mandorId", mandorId)
             .get()
             .addOnSuccessListener { docs ->
-                val hariIni = docs.filter { (it.getLong("tanggalProduksi") ?: 0L) >= startOfDay }
-                val bulanIni = docs.filter { (it.getLong("tanggalProduksi") ?: 0L) >= startOfMonth }
+                // Sort descending by tanggalProduksi in memory
+                val sorted = docs.documents.sortedByDescending { it.getLong("tanggalProduksi") ?: 0L }
+
+                val hariIni = sorted.filter { (it.getLong("tanggalProduksi") ?: 0L) >= startOfDay }
+                val bulanIni = sorted.filter { (it.getLong("tanggalProduksi") ?: 0L) >= startOfMonth }
 
                 binding.tvProduksiHariIni.text = "${hariIni.size} batch"
                 binding.tvProduksiBulanIni.text = "${bulanIni.size} batch"
 
                 loadTotalItemBulanIni(bulanIni.map { it.id })
-                showRecentProduksi(docs.documents.take(5).map { doc ->
+                showRecentProduksi(sorted.take(5).map { doc ->
                     Triple(
                         doc.getLong("tanggalProduksi") ?: 0L,
                         doc.getString("mandorName") ?: "-",

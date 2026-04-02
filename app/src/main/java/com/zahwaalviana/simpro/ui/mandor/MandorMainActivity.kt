@@ -3,11 +3,13 @@ package com.zahwaalviana.simpro.ui.mandor
 import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
+import android.widget.TextView
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.zahwaalviana.simpro.R
 import com.zahwaalviana.simpro.ui.auth.LoginActivity
 import com.zahwaalviana.simpro.ui.produksi.ProduksiListFragment
@@ -40,9 +42,28 @@ class MandorMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
+        loadNavHeader()
+
         if (savedInstanceState == null) {
             loadDashboard()
         }
+    }
+
+    private fun loadNavHeader() {
+        val uid = auth.currentUser?.uid ?: return
+        val headerView = navigationView.getHeaderView(0)
+        val tvName = headerView.findViewById<TextView>(R.id.tvMandorName)
+        val tvEmail = headerView.findViewById<TextView>(R.id.tvmandorEmail)
+
+        tvEmail.text = auth.currentUser?.email ?: ""
+
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(uid)
+            .get()
+            .addOnSuccessListener { doc ->
+                tvName.text = doc.getString("name") ?: "Mandor"
+            }
     }
 
     private fun loadDashboard() {

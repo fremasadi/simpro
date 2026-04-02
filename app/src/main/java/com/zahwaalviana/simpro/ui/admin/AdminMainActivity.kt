@@ -9,8 +9,10 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.graphics.toColorInt
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import android.widget.TextView
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.firestore.FirebaseFirestore
 import com.zahwaalviana.simpro.R
 import com.zahwaalviana.simpro.ui.auth.LoginActivity
 import com.zahwaalviana.simpro.ui.barang.BarangListFragment
@@ -50,9 +52,28 @@ class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
+        loadNavHeader()
+
         if (savedInstanceState == null) {
             loadDashboard()
         }
+    }
+
+    private fun loadNavHeader() {
+        val uid = auth.currentUser?.uid ?: return
+        val headerView = navigationView.getHeaderView(0)
+        val tvName = headerView.findViewById<TextView>(R.id.tvAdminName)
+        val tvEmail = headerView.findViewById<TextView>(R.id.tvAdminEmail)
+
+        tvEmail.text = auth.currentUser?.email ?: ""
+
+        FirebaseFirestore.getInstance()
+            .collection("users")
+            .document(uid)
+            .get()
+            .addOnSuccessListener { doc ->
+                tvName.text = doc.getString("name") ?: "Admin"
+            }
     }
 
     private fun loadDashboard() {

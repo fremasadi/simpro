@@ -16,9 +16,10 @@
         android:layout_marginBottom="8dp" />
 
     <TextView
+        android:id="@+id/tvMandorName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="mandor"
+        android:text="Mandor"
         android:textSize="18sp"
         android:textStyle="bold"
         android:textColor="#FFFFFF" />
