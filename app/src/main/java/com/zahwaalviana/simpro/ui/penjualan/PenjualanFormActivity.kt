@@ -31,7 +31,9 @@ class PenjualanFormActivity : AppCompatActivity() {
     private var varianMap = mutableMapOf<String, BarangVarian>()
 
     private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
+    private val numberFormat = NumberFormat.getNumberInstance(Locale("id", "ID"))
     private var totalHarga = 0
+    private var isFormattingBayar = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +70,17 @@ class PenjualanFormActivity : AppCompatActivity() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
+                if (isFormattingBayar) return
+                isFormattingBayar = true
+                val digits = s.toString().replace(".", "")
+                val number = digits.toLongOrNull()
+                if (number != null) {
+                    val formatted = numberFormat.format(number)
+                    s?.replace(0, s.length, formatted)
+                } else if (digits.isEmpty()) {
+                    s?.clear()
+                }
+                isFormattingBayar = false
                 updateKembalian()
             }
         })
@@ -248,7 +261,7 @@ class PenjualanFormActivity : AppCompatActivity() {
     }
 
     private fun updateKembalian() {
-        val bayar = binding.etBayar.text.toString().toIntOrNull() ?: 0
+        val bayar = binding.etBayar.text.toString().replace(".", "").toIntOrNull() ?: 0
         val kembalian = bayar - totalHarga
         binding.tvKembalian.text = currencyFormat.format(if (kembalian > 0) kembalian else 0)
 
@@ -299,7 +312,7 @@ class PenjualanFormActivity : AppCompatActivity() {
             return false
         }
 
-        val bayar = binding.etBayar.text.toString().toIntOrNull() ?: 0
+        val bayar = binding.etBayar.text.toString().replace(".", "").toIntOrNull() ?: 0
         if (bayar <= 0) {
             Toast.makeText(this, "Total bayar harus diisi", Toast.LENGTH_SHORT).show()
             return false
@@ -316,7 +329,7 @@ class PenjualanFormActivity : AppCompatActivity() {
     private fun savePenjualan() {
         showLoading(true)
 
-        val bayar = binding.etBayar.text.toString().toIntOrNull() ?: 0
+        val bayar = binding.etBayar.text.toString().replace(".", "").toIntOrNull() ?: 0
         val kembalian = bayar - totalHarga
 
         val penjualanData = hashMapOf(

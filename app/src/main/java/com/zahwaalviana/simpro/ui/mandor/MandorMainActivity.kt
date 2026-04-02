@@ -25,12 +25,9 @@ class MandorMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
 
         auth = FirebaseAuth.getInstance()
 
-        // Setup toolbar
         toolbar = findViewById(R.id.toolbar_mandor)
         setSupportActionBar(toolbar)
-        supportActionBar?.title = "Dashboard Mandor"
 
-        // Setup drawer
         drawerLayout = findViewById(R.id.drawer_layout_mandor)
         navigationView = findViewById(R.id.nav_view_mandor)
         navigationView.setNavigationItemSelectedListener(this)
@@ -42,10 +39,23 @@ class MandorMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
         )
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
+
+        if (savedInstanceState == null) {
+            loadDashboard()
+        }
+    }
+
+    private fun loadDashboard() {
+        supportActionBar?.title = "Dashboard Mandor"
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.container_mandor, DashboardMandorFragment())
+            .commit()
+        navigationView.setCheckedItem(R.id.nav_dashboard)
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
+            R.id.nav_dashboard -> loadDashboard()
 
             R.id.nav_produksi -> {
                 supportActionBar?.title = "Produksi"
@@ -53,13 +63,6 @@ class MandorMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
                     .replace(R.id.container_mandor, ProduksiListFragment.newInstance("mandor"))
                     .commit()
             }
-
-//            R.id.nav_laporan -> {
-//                supportActionBar?.title = "Laporan Mandor"
-////                supportFragmentManager.beginTransaction()
-////                    .replace(R.id.container_mandor, LaporanMandorFragment())
-////                    .commit()
-//            }
 
             R.id.nav_logout -> {
                 auth.signOut()
@@ -71,6 +74,4 @@ class MandorMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
         drawerLayout.closeDrawer(GravityCompat.START)
         return true
     }
-
-
 }

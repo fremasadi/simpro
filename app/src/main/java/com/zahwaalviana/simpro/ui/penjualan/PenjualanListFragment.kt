@@ -2,6 +2,8 @@ package com.zahwaalviana.simpro.ui.penjualan
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -9,6 +11,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.datepicker.MaterialDatePicker
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
@@ -18,6 +21,8 @@ import com.zahwaalviana.simpro.data.model.PenjualanItem
 import com.zahwaalviana.simpro.data.model.PenjualanWithItems
 import com.zahwaalviana.simpro.databinding.FragmentPenjualanListBinding
 import com.zahwaalviana.simpro.ui.penjualan.adapter.PenjualanAdapter
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class PenjualanListFragment : Fragment() {
 
@@ -27,7 +32,13 @@ class PenjualanListFragment : Fragment() {
     private lateinit var db: FirebaseFirestore
     private lateinit var adapter: PenjualanAdapter
     private var penjualanListener: ListenerRegistration? = null
+
+    private val allPenjualanList = mutableListOf<PenjualanWithItems>()
     private val penjualanList = mutableListOf<PenjualanWithItems>()
+
+    private var startDateMs: Long? = null
+    private var endDateMs: Long? = null
+    private val dateDisplayFormat = SimpleDateFormat("dd/MM/yyyy", Locale("id", "ID"))
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -55,9 +66,7 @@ class PenjualanListFragment : Fragment() {
     private fun setupRecyclerView() {
         adapter = PenjualanAdapter(
             penjualanList,
-            onDelete = { item ->
-                showDeleteConfirmation(item)
-            }
+            onDelete = { item -> showDeleteConfirmation(item) }
         )
         binding.rvPenjualan.layoutManager = LinearLayoutManager(requireContext())
         binding.rvPenjualan.adapter = adapter
@@ -71,11 +80,55 @@ class PenjualanListFragment : Fragment() {
         binding.swipeRefresh.setOnRefreshListener {
             loadPenjualanData()
         }
+
+        binding.etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) { applyFilter() }
+        })
+
+        val dateRangeClickListener = View.OnClickListener { showDateRangePicker() }
+        binding.etStartDate.setOnClickListener(dateRangeClickListener)
+        binding.etEndDate.setOnClickListener(dateRangeClickListener)
+        binding.tilStartDate.setOnClickListener(dateRangeClickListener)
+        binding.tilEndDate.setOnClickListener(dateRangeClickListener)
+
+        binding.btnResetDate.setOnClickListener {
+            startDateMs = null
+            endDateMs = null
+            binding.etStartDate.setText("")
+            binding.etEndDate.setText("")
+            binding.btnResetDate.visibility = View.GONE
+            applyFilter()
+        }
+    }
+
+    private fun showDateRangePicker() {
+        val picker = MaterialDatePicker.Builder.dateRangePicker()
+            .setTitleText("Pilih Rentang Tanggal")
+            .apply {
+                if (startDateMs != null && endDateMs != null) {
+                    setSelection(androidx.core.util.Pair(startDateMs, endDateMs))
+                }
+            }
+            .build()
+
+        picker.addOnPositiveButtonClickListener { selection ->
+            startDateMs = selection.first
+            endDateMs = (selection.second ?: selection.first) + 86_399_999L
+            binding.etStartDate.setText(dateDisplayFormat.format(startDateMs!!))
+            binding.etEndDate.setText(dateDisplayFormat.format(endDateMs!! - 86_399_999L))
+            binding.btnResetDate.visibility = View.VISIBLE
+            applyFilter()
+        }
+
+        picker.show(parentFragmentManager, "date_range_picker")
     }
 
     private fun loadPenjualanData() {
         showLoading(true)
 
+        penjualanListener?.remove()
         penjualanListener = db.collection("penjualan")
             .orderBy("tanggal", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, error ->
@@ -86,7 +139,7 @@ class PenjualanListFragment : Fragment() {
                     return@addSnapshotListener
                 }
 
-                penjualanList.clear()
+                allPenjualanList.clear()
                 val docs = snapshots?.documents ?: emptyList()
                 val totalDocs = docs.size
                 var processedDocs = 0
@@ -94,8 +147,7 @@ class PenjualanListFragment : Fragment() {
                 if (totalDocs == 0) {
                     showLoading(false)
                     binding.swipeRefresh.isRefreshing = false
-                    adapter.notifyDataSetChanged()
-                    updateEmptyState()
+                    applyFilter()
                     return@addSnapshotListener
                 }
 
@@ -109,18 +161,37 @@ class PenjualanListFragment : Fragment() {
                     )
 
                     loadItemsForPenjualan(penjualan) { items ->
-                        penjualanList.add(PenjualanWithItems(penjualan, items))
+                        allPenjualanList.add(PenjualanWithItems(penjualan, items))
                         processedDocs++
 
                         if (processedDocs == totalDocs) {
+                            allPenjualanList.sortByDescending { it.penjualan.tanggal }
                             showLoading(false)
                             binding.swipeRefresh.isRefreshing = false
-                            adapter.notifyDataSetChanged()
-                            updateEmptyState()
+                            applyFilter()
                         }
                     }
                 }
             }
+    }
+
+    private fun applyFilter() {
+        val query = binding.etSearch.text.toString().trim()
+
+        val filtered = allPenjualanList.filter { item ->
+            val matchSearch = query.isEmpty() ||
+                item.items.any { it.barangNama.contains(query, ignoreCase = true) }
+
+            val matchDate = startDateMs == null || endDateMs == null ||
+                item.penjualan.tanggal in startDateMs!!..endDateMs!!
+
+            matchSearch && matchDate
+        }
+
+        penjualanList.clear()
+        penjualanList.addAll(filtered)
+        adapter.notifyDataSetChanged()
+        updateEmptyState()
     }
 
     private fun loadItemsForPenjualan(penjualan: Penjualan, callback: (List<PenjualanItem>) -> Unit) {
@@ -140,7 +211,6 @@ class PenjualanListFragment : Fragment() {
                 itemDocs.documents.forEach { itemDoc ->
                     val varianId = itemDoc.getString("varian_id") ?: ""
 
-                    // Load varian to get barang name
                     db.collection("barang_varian").document(varianId)
                         .get()
                         .addOnSuccessListener { varianDoc ->
@@ -161,22 +231,16 @@ class PenjualanListFragment : Fragment() {
                                 items.add(item)
                                 processedItems++
 
-                                if (processedItems == totalItems) {
-                                    callback(items)
-                                }
+                                if (processedItems == totalItems) callback(items)
                             }
                         }
                         .addOnFailureListener {
                             processedItems++
-                            if (processedItems == totalItems) {
-                                callback(items)
-                            }
+                            if (processedItems == totalItems) callback(items)
                         }
                 }
             }
-            .addOnFailureListener {
-                callback(emptyList())
-            }
+            .addOnFailureListener { callback(emptyList()) }
     }
 
     private fun loadBarangAndKemasan(
@@ -209,9 +273,7 @@ class PenjualanListFragment : Fragment() {
         AlertDialog.Builder(requireContext())
             .setTitle("Hapus Transaksi")
             .setMessage("Yakin ingin menghapus transaksi ini? Stok barang akan dikembalikan.")
-            .setPositiveButton("Hapus") { _, _ ->
-                deletePenjualan(item)
-            }
+            .setPositiveButton("Hapus") { _, _ -> deletePenjualan(item) }
             .setNegativeButton("Batal", null)
             .show()
     }
@@ -223,7 +285,6 @@ class PenjualanListFragment : Fragment() {
             .addOnSuccessListener { itemDocs ->
                 val batch = db.batch()
 
-                // Revert stok for each item
                 itemDocs.documents.forEach { doc ->
                     val varianId = doc.getString("varian_id") ?: ""
                     val jumlah = doc.getLong("jumlah")?.toInt() ?: 0
@@ -238,7 +299,6 @@ class PenjualanListFragment : Fragment() {
                     batch.delete(doc.reference)
                 }
 
-                // Delete penjualan
                 batch.delete(db.collection("penjualan").document(penjualanWithItems.penjualan.id))
 
                 batch.commit()

@@ -6,19 +6,19 @@ import android.view.MenuItem
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
+import androidx.core.graphics.toColorInt
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import com.zahwaalviana.simpro.R
+import com.zahwaalviana.simpro.ui.auth.LoginActivity
 import com.zahwaalviana.simpro.ui.barang.BarangListFragment
 import com.zahwaalviana.simpro.ui.kemasan.KemasanListFragment
-import com.zahwaalviana.simpro.ui.auth.LoginActivity
-import com.zahwaalviana.simpro.ui.user.UserListFragment
-import androidx.core.graphics.toColorInt
 import com.zahwaalviana.simpro.ui.pengeluaran.PengeluaranListFragment
 import com.zahwaalviana.simpro.ui.penjualan.PenjualanListFragment
 import com.zahwaalviana.simpro.ui.produksi.ProduksiListFragment
+import com.zahwaalviana.simpro.ui.user.UserListFragment
 
 class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -35,16 +35,13 @@ class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
 
         auth = FirebaseAuth.getInstance()
 
-        // Setup Toolbar
         toolbar = findViewById(R.id.toolbar)
         setSupportActionBar(toolbar)
 
-        // Setup Drawer
         drawerLayout = findViewById(R.id.drawer_layout)
         navigationView = findViewById(R.id.nav_view)
         navigationView.setNavigationItemSelectedListener(this)
 
-        // Setup Hamburger Icon
         val toggle = ActionBarDrawerToggle(
             this, drawerLayout, toolbar,
             R.string.navigation_drawer_open,
@@ -53,15 +50,22 @@ class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        // Set title
+        if (savedInstanceState == null) {
+            loadDashboard()
+        }
+    }
+
+    private fun loadDashboard() {
         supportActionBar?.title = "Dashboard Admin"
+        supportFragmentManager.beginTransaction()
+            .replace(R.id.container_admin, DashboardAdminFragment())
+            .commit()
+        navigationView.setCheckedItem(R.id.nav_dashboard)
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
-            R.id.nav_dashboard -> {
-                supportActionBar?.title = "Dashboard Admin"
-            }
+            R.id.nav_dashboard -> loadDashboard()
 
             R.id.nav_manage_users -> {
                 supportActionBar?.title = "Kelola Pengguna"
@@ -70,14 +74,14 @@ class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
                     .commit()
             }
 
-            R.id.nav_barang -> {   // ← Menu barang
+            R.id.nav_barang -> {
                 supportActionBar?.title = "Master Barang"
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.container_admin, BarangListFragment())
                     .commit()
             }
 
-            R.id.nav_kemasan -> {   // ← Menu barang
+            R.id.nav_kemasan -> {
                 supportActionBar?.title = "Master Kemasan"
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.container_admin, KemasanListFragment())
@@ -115,5 +119,4 @@ class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         drawerLayout.closeDrawer(GravityCompat.START)
         return true
     }
-
 }
