@@ -12,6 +12,7 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.zahwaalviana.simpro.R
 import com.zahwaalviana.simpro.ui.auth.LoginActivity
+import com.zahwaalviana.simpro.ui.laporan.LaporanFragment
 import com.zahwaalviana.simpro.ui.produksi.ProduksiListFragment
 
 class MandorMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -82,6 +83,13 @@ class MandorMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemS
                 supportActionBar?.title = "Produksi"
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.container_mandor, ProduksiListFragment.newInstance("mandor"))
+                    .commit()
+            }
+
+            R.id.nav_laporan -> {
+                supportActionBar?.title = "Laporan Rangkuman"
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.container_mandor, LaporanFragment())
                     .commit()
             }
 

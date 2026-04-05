@@ -12,6 +12,11 @@
         android:title="Produksi Harian" />
 
     <item
+        android:id="@+id/nav_laporan"
+        android:icon="@drawable/ic_laporan"
+        android:title="Laporan" />
+
+    <item
         android:id="@+id/nav_logout"
         android:icon="@android:drawable/ic_lock_power_off"
         android:title="Logout" />

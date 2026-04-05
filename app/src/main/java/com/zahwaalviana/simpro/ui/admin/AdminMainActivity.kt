@@ -17,6 +17,7 @@ import com.zahwaalviana.simpro.R
 import com.zahwaalviana.simpro.ui.auth.LoginActivity
 import com.zahwaalviana.simpro.ui.barang.BarangListFragment
 import com.zahwaalviana.simpro.ui.kemasan.KemasanListFragment
+import com.zahwaalviana.simpro.ui.laporan.LaporanFragment
 import com.zahwaalviana.simpro.ui.pengeluaran.PengeluaranListFragment
 import com.zahwaalviana.simpro.ui.penjualan.PenjualanListFragment
 import com.zahwaalviana.simpro.ui.produksi.ProduksiListFragment
@@ -127,6 +128,13 @@ class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
                 supportActionBar?.title = "POS / Kasir"
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.container_admin, PenjualanListFragment())
+                    .commit()
+            }
+
+            R.id.nav_laporan -> {
+                supportActionBar?.title = "Laporan Rangkuman"
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.container_admin, LaporanFragment())
                     .commit()
             }
 

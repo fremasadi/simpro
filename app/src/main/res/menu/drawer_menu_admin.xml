@@ -40,6 +40,11 @@
             android:icon="@drawable/ic_laporan"
             android:title="POS / Kasir" />
 
+        <item
+            android:id="@+id/nav_laporan"
+            android:icon="@drawable/ic_laporan"
+            android:title="Laporan" />
+
     </group>
 
     <item android:title="Akun">
