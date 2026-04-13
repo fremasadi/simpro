@@ -41,9 +41,19 @@
             android:title="POS / Kasir" />
 
         <item
+            android:id="@+id/nav_history_penjualan"
+            android:icon="@android:drawable/ic_menu_recent_history"
+            android:title="Riwayat Penjualan" />
+
+        <item
             android:id="@+id/nav_laporan"
             android:icon="@drawable/ic_laporan"
-            android:title="Laporan" />
+            android:title="Laporan Produksi" />
+
+        <item
+            android:id="@+id/nav_laporan_penjualan"
+            android:icon="@drawable/ic_laporan"
+            android:title="Laporan Penjualan" />
 
     </group>
 

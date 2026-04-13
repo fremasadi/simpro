@@ -18,7 +18,9 @@ import com.zahwaalviana.simpro.ui.auth.LoginActivity
 import com.zahwaalviana.simpro.ui.barang.BarangListFragment
 import com.zahwaalviana.simpro.ui.kemasan.KemasanListFragment
 import com.zahwaalviana.simpro.ui.laporan.LaporanFragment
+import com.zahwaalviana.simpro.ui.laporan_penjualan.LaporanPenjualanFragment
 import com.zahwaalviana.simpro.ui.pengeluaran.PengeluaranListFragment
+import com.zahwaalviana.simpro.ui.penjualan.PenjualanFormActivity
 import com.zahwaalviana.simpro.ui.penjualan.PenjualanListFragment
 import com.zahwaalviana.simpro.ui.produksi.ProduksiListFragment
 import com.zahwaalviana.simpro.ui.user.UserListFragment
@@ -125,16 +127,27 @@ class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
             }
 
             R.id.nav_penjualan -> {
-                supportActionBar?.title = "POS / Kasir"
+                startActivity(Intent(this, PenjualanFormActivity::class.java))
+            }
+
+            R.id.nav_history_penjualan -> {
+                supportActionBar?.title = "Riwayat Penjualan"
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.container_admin, PenjualanListFragment())
                     .commit()
             }
 
             R.id.nav_laporan -> {
-                supportActionBar?.title = "Laporan Rangkuman"
+                supportActionBar?.title = "Laporan Produksi"
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.container_admin, LaporanFragment())
+                    .commit()
+            }
+
+            R.id.nav_laporan_penjualan -> {
+                supportActionBar?.title = "Laporan Penjualan"
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.container_admin, LaporanPenjualanFragment())
                     .commit()
             }
 
