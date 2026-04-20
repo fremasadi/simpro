@@ -196,10 +196,10 @@ class DashboardMandorFragment : Fragment() {
             itemView.findViewById<TextView>(R.id.tvRecentTitle).text =
                 timeFormat.format(Date(tanggal))
             itemView.findViewById<TextView>(R.id.tvRecentSubtitle).text = "Mandor: $mandorName"
-            itemView.findViewById<TextView>(R.id.tvRecentAmount).apply {
-                text = "Lihat"
-                setTextColor(android.graphics.Color.parseColor("#64B5F6"))
-            }
+//            itemView.findViewById<TextView>(R.id.tvRecentAmount).apply {
+//                text = "Lihat"
+//                setTextColor(android.graphics.Color.parseColor("#64B5F6"))
+//            }
 
             binding.llRecentProduksi.addView(itemView)
         }
