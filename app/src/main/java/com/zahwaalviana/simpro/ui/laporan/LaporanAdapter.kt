@@ -11,18 +11,22 @@ sealed class LaporanItem {
     data class ProduksiUI(
         val title: String,
         val date: Long,
-        val info: String
+        val info: String,
+        val id: String = "" // Tambahkan ID untuk referensi detail
     ) : LaporanItem()
 
     data class PenjualanUI(
         val title: String,
         val date: Long,
-        val info: String
+        val info: String,
+        val id: String = "" // Tambahkan ID untuk referensi detail
     ) : LaporanItem()
 }
 
-class LaporanAdapter(private val items: List<LaporanItem>) :
-    RecyclerView.Adapter<LaporanAdapter.LaporanViewHolder>() {
+class LaporanAdapter(
+    private val items: List<LaporanItem>,
+    private val onViewClick: (LaporanItem) -> Unit = {}
+) : RecyclerView.Adapter<LaporanAdapter.LaporanViewHolder>() {
 
     private val sdf = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
 
@@ -40,16 +44,18 @@ class LaporanAdapter(private val items: List<LaporanItem>) :
                 is LaporanItem.ProduksiUI -> {
                     tvItemType.text = "PRODUKSI"
                     tvItemTitle.text = item.title
-                    tvItemDate.text = "Tanggal: ${sdf.format(Date(item.date))}"
+                    tvItemDate.text = sdf.format(Date(item.date))
                     tvItemInfo.text = item.info
                 }
                 is LaporanItem.PenjualanUI -> {
                     tvItemType.text = "PENJUALAN"
                     tvItemTitle.text = item.title
-                    tvItemDate.text = "Tanggal: ${sdf.format(Date(item.date))}"
+                    tvItemDate.text = sdf.format(Date(item.date))
                     tvItemInfo.text = item.info
                 }
             }
+            
+            ivView.setOnClickListener { onViewClick(item) }
         }
     }
 
