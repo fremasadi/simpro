@@ -3,6 +3,7 @@ package com.zahwaalviana.simpro.ui.produksi.adapter
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
@@ -14,6 +15,7 @@ import java.util.*
 
 class ProduksiAdapter(
     private val produksiList: List<ProduksiWithItems>,
+    private val userRole: String,
     private val onEditClick: (ProduksiWithItems) -> Unit,
     private val onDeleteClick: (ProduksiWithItems) -> Unit
 ) : RecyclerView.Adapter<ProduksiAdapter.ProduksiViewHolder>() {
@@ -32,6 +34,16 @@ class ProduksiAdapter(
                 tvTanggalProduksi.text = dateFormat.format(Date(produksi.tanggalProduksi))
                 tvMandor.text = "Mandor: ${produksi.mandorName}"
                 tvJumlahItem.text = "${items.size} Item Produksi"
+
+                // Hanya sembunyikan tombol EDIT untuk admin, DELETE tetap ada
+                if (userRole == "admin") {
+                    ivEdit.visibility = View.GONE
+                } else {
+                    ivEdit.visibility = View.VISIBLE
+                }
+                
+                // Tombol DELETE selalu terlihat (atau sesuaikan jika mandor juga boleh hapus)
+                ivDelete.visibility = View.VISIBLE
 
                 // Clear previous chips
                 chipGroupItems.removeAllViews()

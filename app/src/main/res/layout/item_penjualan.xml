@@ -1,87 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_margin="4dp"
-    android:background="@color/white"
-    app:cardElevation="2dp"
-    app:cardCornerRadius="8dp">
+    android:orientation="vertical">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="match_parent"
+    <LinearLayout
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@color/white"
-        android:padding="16dp">
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:gravity="center_vertical"
+        android:background="?attr/selectableItemBackground">
 
         <TextView
             android:id="@+id/tvTanggal"
-            android:layout_width="0dp"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:text="01 Januari 2026"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="#212121"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/ivDelete" />
+            android:text="15/05/24 10:00"
+            android:textSize="12sp"
+            android:textColor="#424242" />
+
+        <TextView
+            android:id="@+id/tvBarangSummary"
+            android:layout_width="200dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:text="Kecap ABC x2, Saos Tomat x1"
+            android:textSize="12sp"
+            android:textColor="#424242"
+            android:ellipsize="end"
+            android:maxLines="2" />
 
         <TextView
             android:id="@+id/tvTotalHarga"
-            android:layout_width="wrap_content"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:text="Rp0"
-            android:textSize="18sp"
+            android:text="Rp50.000"
+            android:textSize="13sp"
             android:textStyle="bold"
             android:textColor="#E59BA6"
-            android:layout_marginTop="4dp"
-            app:layout_constraintTop_toBottomOf="@id/tvTanggal"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <TextView
-            android:id="@+id/tvJumlahItem"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="3 item"
-            android:textSize="13sp"
-            android:textColor="#757575"
-            android:layout_marginTop="4dp"
-            app:layout_constraintTop_toBottomOf="@id/tvTotalHarga"
-            app:layout_constraintStart_toStartOf="parent" />
-
-        <com.google.android.material.chip.ChipGroup
-            android:id="@+id/chipGroupItems"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            app:singleLine="true"
-            app:layout_constraintTop_toBottomOf="@id/tvJumlahItem"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
-
-        <TextView
-            android:id="@+id/tvBayarKembalian"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Bayar: Rp0 | Kembali: Rp0"
-            android:textSize="12sp"
-            android:textColor="#757575"
-            android:layout_marginTop="4dp"
-            app:layout_constraintTop_toBottomOf="@id/chipGroupItems"
-            app:layout_constraintStart_toStartOf="parent" />
+            android:gravity="end"
+            android:paddingEnd="8dp"/>
 
         <ImageView
             android:id="@+id/ivDelete"
-            android:layout_width="40dp"
+            android:layout_width="50dp"
             android:layout_height="40dp"
             android:src="@android:drawable/ic_menu_delete"
-            android:padding="8dp"
+            android:padding="10dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="Delete"
-            app:tint="#D32F2F"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent" />
+            app:tint="#D32F2F" />
 
-    </androidx.constraintlayout.widget.ConstraintLayout>
+    </LinearLayout>
 
-</com.google.android.material.card.MaterialCardView>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#EEEEEE" />
+
+</LinearLayout>

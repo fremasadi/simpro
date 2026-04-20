@@ -1,107 +1,204 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp">
+    android:background="#FFFFFF">
 
-    <TextView
+    <com.google.android.material.appbar.AppBarLayout
+        android:id="@+id/appBarLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Pilih Rentang Tanggal"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp"/>
+        app:layout_constraintTop_toTopOf="parent">
+
+        <androidx.appcompat.widget.Toolbar
+            android:id="@+id/toolbar"
+            android:layout_width="match_parent"
+            android:layout_height="?attr/actionBarSize"
+            android:background="#E59BA6"
+            android:elevation="4dp"
+            app:title="Laporan"
+            app:titleTextColor="#FFFFFF" />
+
+    </com.google.android.material.appbar.AppBarLayout>
 
     <LinearLayout
+        android:id="@+id/filterContainer"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginBottom="16dp">
+        android:orientation="vertical"
+        android:padding="12dp"
+        app:layout_constraintTop_toBottomOf="@id/appBarLayout">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <Button
+                android:id="@+id/btnStartDate"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Dari Tanggal"
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                app:strokeColor="#E59BA6"
+                android:textColor="#E59BA6" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text=" – "
+                android:paddingHorizontal="4dp" />
+
+            <Button
+                android:id="@+id/btnEndDate"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Sampai Tanggal"
+                android:textAllCaps="false"
+                android:textSize="12sp"
+                app:strokeColor="#E59BA6"
+                android:textColor="#E59BA6" />
+
+        </LinearLayout>
 
         <Button
-            android:id="@+id/btnStartDate"
-            android:layout_width="0dp"
+            android:id="@+id/btnExportPdf"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Dari: -"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+            android:layout_marginTop="8dp"
+            android:text="Export PDF"
+            android:textAllCaps="false"
+            android:backgroundTint="#E59BA6"
+            android:textColor="#FFFFFF" />
 
-        <View
-            android:layout_width="8dp"
-            android:layout_height="0dp"/>
-
-        <Button
-            android:id="@+id/btnEndDate"
-            android:layout_width="0dp"
+        <TextView
+            android:id="@+id/tvStatus"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:text="Sampai: -"
-            style="@style/Widget.MaterialComponents.Button.OutlinedButton"/>
+            android:layout_marginTop="8dp"
+            android:text="Silakan pilih rentang tanggal"
+            android:textSize="12sp"
+            android:textColor="#757575"
+            android:gravity="center" />
+
     </LinearLayout>
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnExportPdf"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Export PDF Laporan"
-        android:layout_marginBottom="16dp"
-        android:backgroundTint="#E59BA6"/>
-
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone"/>
-
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:textAlignment="center"
-        android:text="Ringkasan Laporan"
-        android:textStyle="bold"
-        android:textSize="16sp"
-        android:layout_marginBottom="8dp"/>
-
-    <androidx.cardview.widget.CardView
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/cardSummary"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
+        android:layout_marginHorizontal="12dp"
+        android:layout_marginBottom="8dp"
         android:visibility="gone"
+        app:cardBackgroundColor="#FFF0F3"
         app:cardCornerRadius="8dp"
-        app:cardElevation="4dp">
+        app:cardElevation="0dp"
+        app:strokeColor="#E59BA6"
+        app:strokeWidth="1dp"
+        app:layout_constraintTop_toBottomOf="@id/filterContainer">
+
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="12dp">
+
             <TextView
                 android:id="@+id/tvSummaryProduksi"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Total Produksi: 0"/>
+                android:text="Total Produksi: 0"
+                android:textColor="#E59BA6"
+                android:textStyle="bold" />
+
             <TextView
                 android:id="@+id/tvSummaryPenjualan"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Total Penjualan: Rp 0"/>
+                android:text="Total Penjualan: Rp0"
+                android:textColor="#E59BA6"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
         </LinearLayout>
-    </androidx.cardview.widget.CardView>
+    </com.google.android.material.card.MaterialCardView>
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Detail Data"
-        android:textStyle="bold"
-        android:layout_marginBottom="8dp"/>
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvLaporan"
+    <HorizontalScrollView
+        android:id="@+id/horizontalScrollView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1"/>
+        android:layout_marginTop="8dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toBottomOf="@id/cardSummary"
+        app:layout_constraintBottom_toBottomOf="parent">
 
-</LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <!-- TABLE HEADER -->
+            <LinearLayout
+                android:id="@+id/headerTable"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:background="#F5F5F5">
+
+                <TextView
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:text="Tipe"
+                    android:textStyle="bold"
+                    android:textSize="13sp"
+                    android:textColor="#212121" />
+
+                <TextView
+                    android:layout_width="100dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+                    android:text="Tanggal"
+                    android:textStyle="bold"
+                    android:textSize="13sp"
+                    android:textColor="#212121" />
+
+                <TextView
+                    android:layout_width="200dp"
+                    android:layout_height="wrap_content"
+                    android:layout_marginHorizontal="8dp"
+                    android:text="Keterangan / Detail"
+                    android:textStyle="bold"
+                    android:textSize="13sp"
+                    android:textColor="#212121" />
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvLaporan"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingVertical="4dp"
+                android:clipToPadding="false" />
+
+        </LinearLayout>
+    </HorizontalScrollView>
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        android:indeterminateTint="#E59BA6"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

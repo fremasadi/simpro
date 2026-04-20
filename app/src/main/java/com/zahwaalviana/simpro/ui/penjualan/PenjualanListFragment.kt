@@ -40,6 +40,9 @@ class PenjualanListFragment : Fragment() {
     private var endDateMs: Long? = null
     private val dateDisplayFormat = SimpleDateFormat("dd/MM/yyyy", Locale("id", "ID"))
 
+    private var currentSortColumn = "tanggal" // "tanggal" or "total"
+    private var isAscending = false
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -73,10 +76,6 @@ class PenjualanListFragment : Fragment() {
     }
 
     private fun setupListeners() {
-        binding.fabAdd.setOnClickListener {
-            startActivity(Intent(requireContext(), PenjualanFormActivity::class.java))
-        }
-
         binding.swipeRefresh.setOnRefreshListener {
             loadPenjualanData()
         }
@@ -101,6 +100,31 @@ class PenjualanListFragment : Fragment() {
             binding.btnResetDate.visibility = View.GONE
             applyFilter()
         }
+
+        binding.tvHeaderTanggal.setOnClickListener {
+            toggleSort("tanggal")
+        }
+
+        binding.tvHeaderTotal.setOnClickListener {
+            toggleSort("total")
+        }
+    }
+
+    private fun toggleSort(column: String) {
+        if (currentSortColumn == column) {
+            isAscending = !isAscending
+        } else {
+            currentSortColumn = column
+            isAscending = true
+        }
+        updateSortHeaders()
+        applyFilter()
+    }
+
+    private fun updateSortHeaders() {
+        val arrow = if (isAscending) " ↑" else " ↓"
+        binding.tvHeaderTanggal.text = "Tanggal" + (if (currentSortColumn == "tanggal") arrow else "")
+        binding.tvHeaderTotal.text = "Total" + (if (currentSortColumn == "total") arrow else "")
     }
 
     private fun showDateRangePicker() {
@@ -165,7 +189,6 @@ class PenjualanListFragment : Fragment() {
                         processedDocs++
 
                         if (processedDocs == totalDocs) {
-                            allPenjualanList.sortByDescending { it.penjualan.tanggal }
                             showLoading(false)
                             binding.swipeRefresh.isRefreshing = false
                             applyFilter()
@@ -178,7 +201,7 @@ class PenjualanListFragment : Fragment() {
     private fun applyFilter() {
         val query = binding.etSearch.text.toString().trim()
 
-        val filtered = allPenjualanList.filter { item ->
+        var filtered = allPenjualanList.filter { item ->
             val matchSearch = query.isEmpty() ||
                 item.items.any { it.barangNama.contains(query, ignoreCase = true) }
 
@@ -186,6 +209,19 @@ class PenjualanListFragment : Fragment() {
                 item.penjualan.tanggal in startDateMs!!..endDateMs!!
 
             matchSearch && matchDate
+        }
+
+        // Apply Sorting
+        filtered = when (currentSortColumn) {
+            "tanggal" -> {
+                if (isAscending) filtered.sortedBy { it.penjualan.tanggal }
+                else filtered.sortedByDescending { it.penjualan.tanggal }
+            }
+            "total" -> {
+                if (isAscending) filtered.sortedBy { it.penjualan.totalHarga }
+                else filtered.sortedByDescending { it.penjualan.totalHarga }
+            }
+            else -> filtered
         }
 
         penjualanList.clear()

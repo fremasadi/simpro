@@ -1,49 +1,72 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.cardview.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:layout_width="match_parent"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginBottom="8dp"
-    app:cardCornerRadius="4dp"
-    app:cardElevation="2dp">
+    android:orientation="vertical">
 
     <LinearLayout
-        android:layout_width="match_parent"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="12dp">
+        android:orientation="horizontal"
+        android:padding="12dp"
+        android:gravity="center_vertical"
+        android:background="?attr/selectableItemBackground">
 
         <TextView
             android:id="@+id/tvItemType"
-            android:layout_width="wrap_content"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:text="PRODUKSI"
+            android:text="TYPE"
+            android:textSize="11sp"
             android:textStyle="bold"
             android:textColor="#E59BA6"
-            android:textSize="12sp"
-            android:layout_marginBottom="4dp"/>
-
-        <TextView
-            android:id="@+id/tvItemTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Judul Item"
-            android:textStyle="bold"
-            android:textSize="16sp"/>
+            android:background="@drawable/bg_chip_light"
+            android:paddingHorizontal="8dp"
+            android:paddingVertical="4dp"
+            android:gravity="center" />
 
         <TextView
             android:id="@+id/tvItemDate"
-            android:layout_width="match_parent"
+            android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:text="Tanggal: 01/01/2023"
-            android:textSize="14sp"/>
+            android:layout_marginStart="8dp"
+            android:text="15/05/2024"
+            android:textSize="12sp"
+            android:textColor="#424242" />
 
-        <TextView
-            android:id="@+id/tvItemInfo"
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="200dp"
             android:layout_height="wrap_content"
-            android:text="Info: -"
-            android:textSize="14sp"/>
+            android:layout_marginHorizontal="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/tvItemTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Title Laporan"
+                android:textColor="#212121"
+                android:textSize="13sp"
+                android:textStyle="bold"
+                android:ellipsize="end"
+                android:maxLines="1" />
+
+            <TextView
+                android:id="@+id/tvItemInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Info detail laporan..."
+                android:textSize="12sp"
+                android:textColor="#757575"
+                android:ellipsize="end"
+                android:maxLines="2" />
+        </LinearLayout>
 
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#EEEEEE" />
+
+</LinearLayout>

@@ -29,12 +29,71 @@
         app:layout_constraintTop_toBottomOf="@id/appBarLayout"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/rvKemasan"
+        <HorizontalScrollView
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:padding="8dp"
-            android:clipToPadding="false" />
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <!-- TABLE HEADER -->
+                <LinearLayout
+                    android:id="@+id/headerTable"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="12dp"
+                    android:background="#F5F5F5">
+
+                    <TextView
+                        android:layout_width="150dp"
+                        android:layout_height="wrap_content"
+                        android:text="Nama Kemasan"
+                        android:textStyle="bold"
+                        android:textSize="13sp"
+                        android:textColor="#212121" />
+
+                    <TextView
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="8dp"
+                        android:text="Satuan"
+                        android:textStyle="bold"
+                        android:textSize="13sp"
+                        android:textColor="#212121" />
+
+                    <TextView
+                        android:layout_width="100dp"
+                        android:layout_height="wrap_content"
+                        android:text="Stok Master"
+                        android:gravity="end"
+                        android:textStyle="bold"
+                        android:textSize="13sp"
+                        android:textColor="#212121"
+                        android:paddingEnd="8dp"/>
+
+                    <TextView
+                        android:layout_width="80dp"
+                        android:layout_height="wrap_content"
+                        android:text="Aksi"
+                        android:gravity="center"
+                        android:textStyle="bold"
+                        android:textSize="13sp"
+                        android:textColor="#212121" />
+                </LinearLayout>
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvKemasan"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:paddingVertical="4dp"
+                    android:clipToPadding="false" />
+
+            </LinearLayout>
+        </HorizontalScrollView>
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
