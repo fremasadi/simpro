@@ -62,6 +62,16 @@
                 android:maxLines="2" />
         </LinearLayout>
 
+        <ImageView
+            android:id="@+id/ivView"
+            android:layout_width="60dp"
+            android:layout_height="36dp"
+            android:src="@android:drawable/ic_menu_view"
+            android:padding="8dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="View Detail"
+            android:tint="#E59BA6" />
+
     </LinearLayout>
 
     <View

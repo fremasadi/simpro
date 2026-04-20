@@ -122,7 +122,7 @@
                 android:id="@+id/tvSummaryPenjualan"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Total Penjualan: Rp0"
+                android:text="Total Pendapatan: Rp0"
                 android:textColor="#E59BA6"
                 android:textStyle="bold"
                 android:visibility="gone" />
@@ -175,6 +175,15 @@
                     android:layout_height="wrap_content"
                     android:layout_marginHorizontal="8dp"
                     android:text="Keterangan / Detail"
+                    android:textStyle="bold"
+                    android:textSize="13sp"
+                    android:textColor="#212121" />
+
+                <TextView
+                    android:layout_width="60dp"
+                    android:layout_height="wrap_content"
+                    android:text="Aksi"
+                    android:gravity="center"
                     android:textStyle="bold"
                     android:textSize="13sp"
                     android:textColor="#212121" />
