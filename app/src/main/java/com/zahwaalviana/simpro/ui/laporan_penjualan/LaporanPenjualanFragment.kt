@@ -131,12 +131,30 @@ class LaporanPenjualanFragment : Fragment() {
                 }
 
                 docs.forEach { doc ->
-                    val penjualan = doc.toObject(Penjualan::class.java).copy(id = doc.id)
+                    // Mapping manual karena field di Firestore menggunakan snake_case
+                    val penjualan = Penjualan(
+                        id = doc.id,
+                        tanggal = doc.getLong("tanggal") ?: 0L,
+                        totalHarga = doc.getLong("total_harga")?.toInt() ?: 0,
+                        totalBayar = doc.getLong("total_bayar")?.toInt() ?: 0,
+                        kembalian = doc.getLong("kembalian")?.toInt() ?: 0
+                    )
                     
                     db.collection("penjualan_items")
-                        .whereEqualTo("penjualanId", doc.id)
+                        .whereEqualTo("penjualan_id", doc.id) // Perbaikan field: penjualan_id
                         .get().addOnSuccessListener { itemDocs ->
-                            val items = itemDocs.toObjects(PenjualanItem::class.java)
+                            val items = itemDocs.documents.map { itemDoc ->
+                                PenjualanItem(
+                                    id = itemDoc.id,
+                                    penjualanId = itemDoc.getString("penjualan_id") ?: "",
+                                    varianId = itemDoc.getString("varian_id") ?: "",
+                                    barangNama = itemDoc.getString("barang_nama") ?: "",
+                                    kemasanNama = itemDoc.getString("kemasan_nama") ?: "",
+                                    hargaSatuan = itemDoc.getLong("harga_satuan")?.toInt() ?: 0,
+                                    jumlah = itemDoc.getLong("jumlah")?.toInt() ?: 0,
+                                    subtotal = itemDoc.getLong("subtotal")?.toInt() ?: 0
+                                )
+                            }
                             listPenjualan.add(penjualan to items)
                             processedDocs++
                             if (processedDocs == totalDocs) {
