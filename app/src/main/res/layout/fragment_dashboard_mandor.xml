@@ -47,16 +47,57 @@
 
         </com.google.android.material.card.MaterialCardView>
 
-        <!-- Section: Hari Ini -->
-        <TextView
-            android:layout_width="wrap_content"
+        <!-- Filter Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp"
-            android:text="Ringkasan Hari Ini"
-            android:textColor="#424242"
-            android:textSize="14sp"
-            android:textStyle="bold" />
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Periode: "
+                android:textStyle="bold"
+                android:textSize="14sp"
+                android:textColor="#424242"/>
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupFilter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:singleSelection="true">
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipToday"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Hari Ini"
+                    android:checked="true"
+                    app:chipBackgroundColor="@color/bg_chip_light_selector" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipMonth"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Bulan Ini"
+                    app:chipBackgroundColor="@color/bg_chip_light_selector" />
+
+                <com.google.android.material.chip.Chip
+                    android:id="@+id/chipCustom"
+                    style="@style/Widget.MaterialComponents.Chip.Choice"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Custom"
+                    app:chipBackgroundColor="@color/bg_chip_light_selector" />
+
+            </com.google.android.material.chip.ChipGroup>
+        </LinearLayout>
+
+        <!-- Ringkasan Statistik -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -86,7 +127,7 @@
                         android:textSize="12sp" />
 
                     <TextView
-                        android:id="@+id/tvProduksiHariIni"
+                        android:id="@+id/tvProduksiStat"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
@@ -96,10 +137,11 @@
                         android:textStyle="bold" />
 
                     <TextView
+                        android:id="@+id/tvProduksiLabel"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="hari ini"
+                        android:text="total batch"
                         android:textColor="#FFFFFF"
                         android:textSize="11sp" />
 
@@ -112,7 +154,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginStart="6dp"
                 android:layout_weight="1"
-                app:cardBackgroundColor="#64B5F6"
+                app:cardBackgroundColor="#81C784"
                 app:cardCornerRadius="10dp"
                 app:cardElevation="3dp">
 
@@ -125,16 +167,16 @@
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Produksi"
+                        android:text="Item Diproduksi"
                         android:textColor="#FFFFFF"
                         android:textSize="12sp" />
 
                     <TextView
-                        android:id="@+id/tvProduksiBulanIni"
+                        android:id="@+id/tvTotalItemStat"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="4dp"
-                        android:text="0 batch"
+                        android:text="0 item"
                         android:textColor="#FFFFFF"
                         android:textSize="22sp"
                         android:textStyle="bold" />
@@ -143,7 +185,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="2dp"
-                        android:text="bulan ini"
+                        android:text="total item"
                         android:textColor="#FFFFFF"
                         android:textSize="11sp" />
 
@@ -153,57 +195,10 @@
 
         </LinearLayout>
 
-        <!-- Item Produksi Card (full width) -->
-        <com.google.android.material.card.MaterialCardView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            app:cardBackgroundColor="#81C784"
-            app:cardCornerRadius="10dp"
-            app:cardElevation="3dp">
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal"
-                android:padding="14dp">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="wrap_content"
-                    android:layout_weight="1"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Total Item Diproduksi"
-                        android:textColor="#FFFFFF"
-                        android:textSize="12sp" />
-
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="2dp"
-                        android:text="bulan ini"
-                        android:textColor="#FFFFFF"
-                        android:textSize="11sp" />
-
-                </LinearLayout>
-
-                <TextView
-                    android:id="@+id/tvTotalItemBulanIni"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="0 item"
-                    android:textColor="#FFFFFF"
-                    android:textSize="22sp"
-                    android:textStyle="bold" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
+        <!-- Hidden original views for compatibility -->
+        <View android:id="@+id/tvProduksiHariIni" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+        <View android:id="@+id/tvProduksiBulanIni" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
+        <View android:id="@+id/tvTotalItemBulanIni" android:layout_width="0dp" android:layout_height="0dp" android:visibility="gone" />
 
         <!-- Recent Produksi -->
         <TextView
