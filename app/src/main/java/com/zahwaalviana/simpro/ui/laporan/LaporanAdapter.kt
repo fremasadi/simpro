@@ -1,6 +1,7 @@
 package com.zahwaalviana.simpro.ui.laporan
 
 import android.view.LayoutInflater
+import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.zahwaalviana.simpro.databinding.ItemLaporanBinding
@@ -12,14 +13,14 @@ sealed class LaporanItem {
         val title: String,
         val date: Long,
         val info: String,
-        val id: String = "" // Tambahkan ID untuk referensi detail
+        val id: String = ""
     ) : LaporanItem()
 
     data class PenjualanUI(
         val title: String,
         val date: Long,
         val info: String,
-        val id: String = "" // Tambahkan ID untuk referensi detail
+        val id: String = ""
     ) : LaporanItem()
 }
 
@@ -46,16 +47,17 @@ class LaporanAdapter(
                     tvItemTitle.text = item.title
                     tvItemDate.text = sdf.format(Date(item.date))
                     tvItemInfo.text = item.info
+                    ivView.visibility = View.GONE // Sembunyikan tombol View untuk Produksi
                 }
                 is LaporanItem.PenjualanUI -> {
                     tvItemType.text = "PENJUALAN"
                     tvItemTitle.text = item.title
                     tvItemDate.text = sdf.format(Date(item.date))
                     tvItemInfo.text = item.info
+                    ivView.visibility = View.VISIBLE // Tampilkan tombol View untuk Penjualan
+                    ivView.setOnClickListener { onViewClick(item) }
                 }
             }
-            
-            ivView.setOnClickListener { onViewClick(item) }
         }
     }
 

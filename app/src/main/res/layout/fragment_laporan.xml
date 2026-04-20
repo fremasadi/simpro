@@ -180,6 +180,7 @@
                     android:textColor="#212121" />
 
                 <TextView
+                    android:id="@+id/tvHeaderAksi"
                     android:layout_width="60dp"
                     android:layout_height="wrap_content"
                     android:text="Aksi"

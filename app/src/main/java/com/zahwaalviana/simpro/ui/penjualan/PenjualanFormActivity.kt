@@ -176,11 +176,9 @@ class PenjualanFormActivity : AppCompatActivity() {
         val etJumlah = itemView.findViewById<TextInputEditText>(R.id.etJumlah)
         val tvStokInfo = itemView.findViewById<TextView>(R.id.tvStokInfo)
         val tvHargaLabel = itemView.findViewById<TextView>(R.id.tvHargaLabel)
-        val tvSubtotal = itemView.findViewById<TextView>(R.id.tvSubtotal)
 
         tvItemNumber.text = "Item ${itemViews.size + 1}"
 
-        // Setup varian dropdown
         val varianNames = varianMap.keys.toList()
         val adapterVarian = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, varianNames)
         actvVarian.setAdapter(adapterVarian)
@@ -199,7 +197,6 @@ class PenjualanFormActivity : AppCompatActivity() {
             }
         }
 
-        // Update subtotal when jumlah changes
         etJumlah.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
@@ -365,9 +362,14 @@ class PenjualanFormActivity : AppCompatActivity() {
             if (varian != null && jumlah > 0) {
                 val subtotal = varian.hargaJual * jumlah
 
+                // Cari barangNama asli dari varianText (Format: "Nama Barang - Kemasan")
+                val barangNama = varianText.substringBefore(" - ")
+
                 val itemData = hashMapOf(
                     "penjualan_id" to penjualanId,
                     "varian_id" to varian.id,
+                    "barang_nama" to barangNama, // Tambahkan ini agar Laporan bisa membaca
+                    "kemasan_nama" to varian.kemasanNama, // Tambahkan ini agar Laporan bisa membaca
                     "harga_satuan" to varian.hargaJual,
                     "jumlah" to jumlah,
                     "subtotal" to subtotal,
@@ -377,7 +379,6 @@ class PenjualanFormActivity : AppCompatActivity() {
                 val docRef = db.collection("penjualan_items").document()
                 batch.set(docRef, itemData)
 
-                // Decrement stok
                 val varianRef = db.collection("barang_varian").document(varian.id)
                 batch.update(varianRef, "stok", FieldValue.increment(-jumlah.toLong()))
             }

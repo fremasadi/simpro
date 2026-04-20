@@ -13,6 +13,7 @@ import android.provider.MediaStore
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.core.content.FileProvider
@@ -43,6 +44,7 @@ class LaporanPenjualanFragment : Fragment() {
     private val listItems = mutableListOf<LaporanItem>()
     private lateinit var adapter: LaporanAdapter
     
+    private val rawData = mutableListOf<Pair<Penjualan, List<PenjualanItem>>>()
     private val formatter = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
 
     override fun onCreateView(
@@ -90,9 +92,33 @@ class LaporanPenjualanFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        adapter = LaporanAdapter(listItems)
+        adapter = LaporanAdapter(listItems) { item ->
+            showDetailDialog(item)
+        }
         binding.rvLaporan.layoutManager = LinearLayoutManager(context)
         binding.rvLaporan.adapter = adapter
+    }
+
+    private fun showDetailDialog(item: LaporanItem) {
+        val id = when(item) {
+            is LaporanItem.PenjualanUI -> item.id
+            else -> ""
+        }
+        
+        val data = rawData.find { it.first.id == id } ?: return
+        val (penjualan, items) = data
+
+        val details = StringBuilder()
+        items.forEach { 
+            details.append("${it.barangNama}\n${it.jumlah} x ${formatter.format(it.hargaSatuan)} = ${formatter.format(it.subtotal)}\n\n")
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Detail Transaksi")
+            .setMessage("Tanggal: ${sdf.format(Date(penjualan.tanggal))}\n\n$details" +
+                    "TOTAL: ${formatter.format(penjualan.totalHarga)}")
+            .setPositiveButton("Tutup", null)
+            .show()
     }
 
     private fun showDatePicker(onDateSelected: (Calendar) -> Unit) {
@@ -131,7 +157,6 @@ class LaporanPenjualanFragment : Fragment() {
                 }
 
                 docs.forEach { doc ->
-                    // Mapping manual karena field di Firestore menggunakan snake_case
                     val penjualan = Penjualan(
                         id = doc.id,
                         tanggal = doc.getLong("tanggal") ?: 0L,
@@ -140,32 +165,13 @@ class LaporanPenjualanFragment : Fragment() {
                         kembalian = doc.getLong("kembalian")?.toInt() ?: 0
                     )
                     
-                    db.collection("penjualan_items")
-                        .whereEqualTo("penjualan_id", doc.id) // Perbaikan field: penjualan_id
-                        .get().addOnSuccessListener { itemDocs ->
-                            val items = itemDocs.documents.map { itemDoc ->
-                                PenjualanItem(
-                                    id = itemDoc.id,
-                                    penjualanId = itemDoc.getString("penjualan_id") ?: "",
-                                    varianId = itemDoc.getString("varian_id") ?: "",
-                                    barangNama = itemDoc.getString("barang_nama") ?: "",
-                                    kemasanNama = itemDoc.getString("kemasan_nama") ?: "",
-                                    hargaSatuan = itemDoc.getLong("harga_satuan")?.toInt() ?: 0,
-                                    jumlah = itemDoc.getLong("jumlah")?.toInt() ?: 0,
-                                    subtotal = itemDoc.getLong("subtotal")?.toInt() ?: 0
-                                )
-                            }
-                            listPenjualan.add(penjualan to items)
-                            processedDocs++
-                            if (processedDocs == totalDocs) {
-                                updateUI(listPenjualan, isExportPdf)
-                            }
-                        }.addOnFailureListener {
-                            processedDocs++
-                            if (processedDocs == totalDocs) {
-                                updateUI(listPenjualan, isExportPdf)
-                            }
+                    loadPenjualanItems(doc.id) { items ->
+                        listPenjualan.add(penjualan to items)
+                        processedDocs++
+                        if (processedDocs == totalDocs) {
+                            updateUI(listPenjualan, isExportPdf)
                         }
+                    }
                 }
             }.addOnFailureListener { e ->
                 binding.progressBar.visibility = View.GONE
@@ -173,8 +179,74 @@ class LaporanPenjualanFragment : Fragment() {
             }
     }
 
+    private fun loadPenjualanItems(penjualanId: String, onComplete: (List<PenjualanItem>) -> Unit) {
+        db.collection("penjualan_items")
+            .whereEqualTo("penjualan_id", penjualanId)
+            .get()
+            .addOnSuccessListener { itemDocs ->
+                val items = mutableListOf<PenjualanItem>()
+                val totalItems = itemDocs.size()
+                var processedItems = 0
+
+                if (totalItems == 0) {
+                    onComplete(emptyList())
+                    return@addOnSuccessListener
+                }
+
+                itemDocs.documents.forEach { itemDoc ->
+                    var bNama = itemDoc.getString("barang_nama") ?: ""
+                    var kNama = itemDoc.getString("kemasan_nama") ?: ""
+                    
+                    val varianId = itemDoc.getString("varian_id") ?: ""
+                    val subtotal = itemDoc.getLong("subtotal")?.toInt() ?: 0
+                    val jumlah = itemDoc.getLong("jumlah")?.toInt() ?: 0
+                    val hargaSatuan = itemDoc.getLong("harga_satuan")?.toInt() ?: 0
+
+                    // Jika barang_nama kosong (transaksi lama), ambil dari master_barang via varian
+                    if (bNama.isEmpty() && varianId.isNotEmpty()) {
+                        db.collection("barang_varian").document(varianId).get().addOnSuccessListener { vDoc ->
+                            val barangId = vDoc.getString("barang_id") ?: ""
+                            val kemasanId = vDoc.getString("kemasan_id") ?: ""
+
+                            loadNames(barangId, kemasanId) { namaB, namaK ->
+                                items.add(PenjualanItem(itemDoc.id, penjualanId, varianId, namaB, namaK, hargaSatuan, jumlah, subtotal))
+                                processedItems++
+                                if (processedItems == totalItems) onComplete(items)
+                            }
+                        }.addOnFailureListener {
+                            processedItems++
+                            if (processedItems == totalItems) onComplete(items)
+                        }
+                    } else {
+                        items.add(PenjualanItem(itemDoc.id, penjualanId, varianId, bNama, kNama, hargaSatuan, jumlah, subtotal))
+                        processedItems++
+                        if (processedItems == totalItems) onComplete(items)
+                    }
+                }
+            }
+            .addOnFailureListener { onComplete(emptyList()) }
+    }
+
+    private fun loadNames(bId: String, kId: String, callback: (String, String) -> Unit) {
+        var bNama = ""
+        var kNama = ""
+        var done = 0
+        db.collection("master_barang").document(bId).get().addOnSuccessListener { 
+            bNama = it.getString("nama_barang") ?: "Unknown"
+            if (++done == 2) callback(bNama, kNama)
+        }.addOnFailureListener { if (++done == 2) callback(bNama, kNama) }
+        
+        db.collection("master_kemasan").document(kId).get().addOnSuccessListener { 
+            kNama = it.getString("nama_kemasan") ?: ""
+            if (++done == 2) callback(bNama, kNama)
+        }.addOnFailureListener { if (++done == 2) callback(bNama, kNama) }
+    }
+
     private fun updateUI(list: List<Pair<Penjualan, List<PenjualanItem>>>, isExportPdf: Boolean) {
         val sortedList = list.sortedByDescending { it.first.tanggal }
+        rawData.clear()
+        rawData.addAll(sortedList)
+        
         listItems.clear()
         var totalPendapatan = 0
         
@@ -184,7 +256,8 @@ class LaporanPenjualanFragment : Fragment() {
             listItems.add(LaporanItem.PenjualanUI(
                 "Total: ${formatter.format(penjualan.totalHarga)}",
                 penjualan.tanggal,
-                "Items: $info"
+                "Items: $info",
+                penjualan.id
             ))
         }
         
@@ -223,25 +296,28 @@ class LaporanPenjualanFragment : Fragment() {
         paint.isFakeBoldText = true
         canvas.drawText("RINCIAN PENJUALAN", 40f, y, paint)
         y += 20f
-        paint.isFakeBoldText = false
         
         list.forEach { (penjualan, items) ->
-            canvas.drawText("- ${sdf.format(Date(penjualan.tanggal))} | Total: ${formatter.format(penjualan.totalHarga)}", 60f, y, paint)
-            y += 15f
-            paint.textSize = 10f
-            val itemsStr = items.joinToString { "${it.barangNama}(${it.jumlah})" }
-            canvas.drawText("  Items: $itemsStr", 70f, y, paint)
-            y += 20f
+            paint.isFakeBoldText = true
             paint.textSize = 12f
+            canvas.drawText("${sdf.format(Date(penjualan.tanggal))} | TOTAL: ${formatter.format(penjualan.totalHarga)}", 40f, y, paint)
+            y += 15f
             
-            if (y > 780) {
-                 // simplify: not handling multi-page correctly in this snippet to keep it concise
+            paint.isFakeBoldText = false
+            paint.textSize = 10f
+            items.forEach { item ->
+                canvas.drawText("- ${item.barangNama} x${item.jumlah} @${formatter.format(item.hargaSatuan)} = ${formatter.format(item.subtotal)}", 50f, y, paint)
+                y += 14f
             }
+            y += 10f
+            
+            if (y > 780) { /* Simplified page break check */ }
         }
         
         y += 10f
+        paint.textSize = 14f
         paint.isFakeBoldText = true
-        canvas.drawText("Total Pendapatan: ${formatter.format(totalPendapatan)}", 40f, y, paint)
+        canvas.drawText("TOTAL PENDAPATAN: ${formatter.format(totalPendapatan)}", 40f, y, paint)
         pdf.finishPage(page)
 
         val fileName = "Laporan_Penjualan_${System.currentTimeMillis()}.pdf"

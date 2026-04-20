@@ -3,7 +3,6 @@ package com.zahwaalviana.simpro.ui.laporan
 import android.app.DatePickerDialog
 import android.content.ContentValues
 import android.content.Intent
-import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
 import android.net.Uri
@@ -28,7 +27,6 @@ import com.zahwaalviana.simpro.data.model.ProduksiItem
 import com.zahwaalviana.simpro.databinding.FragmentLaporanBinding
 import java.io.File
 import java.io.FileOutputStream
-import java.io.OutputStream
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -59,6 +57,9 @@ class LaporanFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+
+        // Hapus header Aksi untuk laporan produksi
+        binding.tvHeaderAksi.visibility = View.GONE
 
         setupRecyclerView()
         checkUserRole()
@@ -95,7 +96,7 @@ class LaporanFragment : Fragment() {
     }
 
     private fun setupRecyclerView() {
-        adapter = LaporanAdapter(listItems)
+        adapter = LaporanAdapter(listItems) { }
         binding.rvLaporan.layoutManager = LinearLayoutManager(context)
         binding.rvLaporan.adapter = adapter
     }
@@ -125,12 +126,6 @@ class LaporanFragment : Fragment() {
     }
 
     private fun fetchDataAndProcess(isExportPdf: Boolean) {
-        if (userRole.isEmpty()) {
-            binding.progressBar.visibility = View.VISIBLE
-            binding.tvStatus.text = "Memuat hak akses..."
-            return
-        }
-
         binding.progressBar.visibility = View.VISIBLE
         binding.tvStatus.text = "Mengambil data..."
 
@@ -208,14 +203,7 @@ class LaporanFragment : Fragment() {
             }
         }.addOnFailureListener { e ->
             binding.progressBar.visibility = View.GONE
-            val errorMsg = e.message ?: "Unknown Error"
-            Log.e("LaporanFragment", "Firestore Error: $errorMsg", e)
-            
-            AlertDialog.Builder(requireContext())
-                .setTitle("Database Error")
-                .setMessage("Pesan Error:\n$errorMsg\n\nJika ada link di atas, salin dan buka di browser untuk membuat index Firestore.")
-                .setPositiveButton("OK", null)
-                .show()
+            Toast.makeText(context, "Error: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -246,7 +234,7 @@ class LaporanFragment : Fragment() {
                 totalQty += it.jumlahProduksi
                 sum += "${it.barangNama} (${it.jumlahProduksi}), "
             }
-            listItems.add(LaporanItem.ProduksiUI("Produksi: ${prod.mandorName}", prod.tanggalProduksi, "Items: ${sum.trimEnd(',', ' ')}"))
+            listItems.add(LaporanItem.ProduksiUI("Produksi: ${prod.mandorName}", prod.tanggalProduksi, "Items: ${sum.trimEnd(',', ' ')}", prod.id))
         }
         adapter.notifyDataSetChanged()
         binding.cardSummary.visibility = View.VISIBLE
@@ -276,8 +264,6 @@ class LaporanFragment : Fragment() {
         y += 30f
         paint.textSize = 12f
         paint.isFakeBoldText = false
-        canvas.drawText("Pencetak: $userRole", 40f, y, paint)
-        y += 20f
         canvas.drawText("Periode: ${sdf.format(startDate!!.time)} - ${sdf.format(endDate!!.time)}", 40f, y, paint)
         y += 40f
 
@@ -290,24 +276,27 @@ class LaporanFragment : Fragment() {
             var sub = 0
             prod.items.forEach { sub += it.jumlahProduksi }
             total += sub
-            canvas.drawText("- ${sdf.format(Date(prod.tanggalProduksi))} | Mandor: ${prod.mandorName} | Qty: $sub", 60f, y, paint)
+            canvas.drawText("- ${sdf.format(Date(prod.tanggalProduksi))} | Mandor: ${prod.mandorName}", 40f, y, paint)
             y += 15f
             paint.textSize = 10f
-            canvas.drawText("  Items: ${prod.items.joinToString { "${it.barangNama}(${it.jumlahProduksi})" }}", 70f, y, paint)
-            y += 20f
-            paint.textSize = 12f
-            
-            if (y > 750) {
-                // Simple check for new page (would need finishing current and starting new in real apps)
+            prod.items.forEach { item ->
+                canvas.drawText("  * ${item.barangNama} - ${item.kemasanNama}: ${item.jumlahProduksi} ${item.kemasanSatuan}", 50f, y, paint)
+                y += 14f
             }
+            y += 10f
+            paint.textSize = 12f
         }
+        
         y += 10f
         paint.isFakeBoldText = true
-        canvas.drawText("Total Produk: $total pcs", 40f, y, paint)
+        canvas.drawText("Total Seluruh Produk: $total", 40f, y, paint)
         pdf.finishPage(page)
 
         val fileName = "Laporan_Produksi_${System.currentTimeMillis()}.pdf"
-        
+        savePdf(pdf, fileName)
+    }
+
+    private fun savePdf(pdf: PdfDocument, fileName: String) {
         try {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 val resolver = requireContext().contentResolver
@@ -329,8 +318,6 @@ class LaporanFragment : Fragment() {
                 if (!simproDir.exists()) simproDir.mkdirs()
                 val file = File(simproDir, fileName)
                 pdf.writeTo(FileOutputStream(file))
-                
-                // For older versions, we might need a file provider to open it
                 val uri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.provider", file)
                 showSuccessDialog(uri, fileName)
             }
@@ -345,7 +332,7 @@ class LaporanFragment : Fragment() {
     private fun showSuccessDialog(uri: Uri, fileName: String) {
         AlertDialog.Builder(requireContext())
             .setTitle("Berhasil")
-            .setMessage("Laporan berhasil disimpan: $fileName\n\nLokasi: Folder Downloads/Simpro")
+            .setMessage("Laporan berhasil disimpan: $fileName")
             .setPositiveButton("Buka PDF") { _, _ ->
                 val intent = Intent(Intent.ACTION_VIEW).apply {
                     setDataAndType(uri, "application/pdf")
