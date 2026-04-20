@@ -1,13 +1,12 @@
 package com.zahwaalviana.simpro.ui.admin
 
+import android.app.DatePickerDialog
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
-import com.google.android.material.card.MaterialCardView
-import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.zahwaalviana.simpro.R
@@ -28,6 +27,9 @@ class DashboardAdminFragment : Fragment() {
     private val dateFormat = SimpleDateFormat("EEEE, dd MMMM yyyy", Locale("id", "ID"))
     private val timeFormat = SimpleDateFormat("dd MMM yyyy, HH:mm", Locale("id", "ID"))
 
+    private var startTs: Long = 0L
+    private var endTs: Long = 0L
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -40,11 +42,74 @@ class DashboardAdminFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding.tvGreetingDate.text = dateFormat.format(Date())
-        showLoading(true)
+        
+        setupFilter()
+        loadWithFilter("today")
+    }
+
+    private fun setupFilter() {
+        binding.chipGroupFilter.setOnCheckedChangeListener { _, checkedId ->
+            when (checkedId) {
+                R.id.chipToday -> loadWithFilter("today")
+                R.id.chipMonth -> loadWithFilter("month")
+                R.id.chipCustom -> showDateRangePicker()
+            }
+        }
+    }
+
+    private fun loadWithFilter(type: String) {
+        val cal = Calendar.getInstance()
+        when (type) {
+            "today" -> {
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
+                startTs = cal.timeInMillis
+                endTs = System.currentTimeMillis()
+                binding.tvProduksiLabel.text = "batch hari ini"
+            }
+            "month" -> {
+                cal.set(Calendar.DAY_OF_MONTH, 1)
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
+                startTs = cal.timeInMillis
+                endTs = System.currentTimeMillis()
+                binding.tvProduksiLabel.text = "batch bulan ini"
+            }
+        }
         loadAllStats()
     }
 
+    private fun showDateRangePicker() {
+        val cal = Calendar.getInstance()
+        DatePickerDialog(requireContext(), { _, year, month, day ->
+            val startCal = Calendar.getInstance().apply {
+                set(year, month, day, 0, 0, 0)
+            }
+            startTs = startCal.timeInMillis
+            
+            DatePickerDialog(requireContext(), { _, y2, m2, d2 ->
+                val endCal = Calendar.getInstance().apply {
+                    set(y2, m2, d2, 23, 59, 59)
+                }
+                endTs = endCal.timeInMillis
+                binding.tvProduksiLabel.text = "batch custom"
+                loadAllStats()
+            }, year, month, day).apply {
+                setTitle("Sampai Tanggal")
+                show()
+            }
+        }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).apply {
+            setTitle("Dari Tanggal")
+            show()
+        }
+    }
+
     private fun loadAllStats() {
+        showLoading(true)
         loadPenjualanStats()
         loadPengeluaranStats()
         loadProduksiStats()
@@ -52,67 +117,46 @@ class DashboardAdminFragment : Fragment() {
     }
 
     private fun loadPenjualanStats() {
-        val startOfDay = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
-
         db.collection("penjualan")
-            .whereGreaterThanOrEqualTo("tanggal", startOfDay)
+            .whereGreaterThanOrEqualTo("tanggal", startTs)
+            .whereLessThanOrEqualTo("tanggal", endTs)
             .get()
             .addOnSuccessListener { docs ->
                 var total = 0
                 docs.forEach { total += it.getLong("total_harga")?.toInt() ?: 0 }
-                binding.tvPenjualanHariIni.text = currencyFormat.format(total)
+                binding.tvPenjualanStat.text = currencyFormat.format(total)
                 binding.tvTransaksiCount.text = "${docs.size()} transaksi"
             }
     }
 
     private fun loadPengeluaranStats() {
-        val cal = Calendar.getInstance()
-        val year = cal.get(Calendar.YEAR)
-        val month = cal.get(Calendar.MONTH) + 1
-        val monthPrefix = "$year-${month.toString().padStart(2, '0')}"
+        // Pengeluaran di simpro menggunakan format String "yyyy-MM-dd"
+        // Kita perlu konversi startTs & endTs ke format tersebut untuk filter (atau ambil semua lalu filter di client)
+        val sdfFilter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
+        val startStr = sdfFilter.format(Date(startTs))
+        val endStr = sdfFilter.format(Date(endTs))
 
         db.collection("pengeluaran")
             .get()
             .addOnSuccessListener { docs ->
                 var total = 0
                 docs.forEach { doc ->
-                    val tanggal = doc.getString("tanggal") ?: ""
-                    if (tanggal.startsWith(monthPrefix)) {
+                    val tgl = doc.getString("tanggal") ?: ""
+                    if (tgl in startStr..endStr) {
                         total += doc.getLong("biaya")?.toInt() ?: 0
                     }
                 }
-                binding.tvPengeluaranBulanIni.text = currencyFormat.format(total)
+                binding.tvPengeluaranStat.text = currencyFormat.format(total)
             }
     }
 
     private fun loadProduksiStats() {
-        val startOfDay = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
-
-        val startOfMonth = Calendar.getInstance().apply {
-            set(Calendar.DAY_OF_MONTH, 1)
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
-
         db.collection("produksi")
+            .whereGreaterThanOrEqualTo("tanggal_produksi", startTs)
+            .whereLessThanOrEqualTo("tanggal_produksi", endTs)
             .get()
             .addOnSuccessListener { docs ->
-                val hariIni = docs.filter { (it.getLong("tanggalProduksi") ?: 0L) >= startOfDay }.size
-                val bulanIni = docs.filter { (it.getLong("tanggalProduksi") ?: 0L) >= startOfMonth }.size
-                binding.tvProduksiHariIni.text = "$hariIni batch"
-                binding.tvProduksiBulanIni.text = "$bulanIni batch"
+                binding.tvProduksiStat.text = "${docs.size()} batch"
             }
     }
 
