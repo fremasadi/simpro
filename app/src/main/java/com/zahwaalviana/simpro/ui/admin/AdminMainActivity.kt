@@ -18,6 +18,7 @@ import com.zahwaalviana.simpro.ui.auth.LoginActivity
 import com.zahwaalviana.simpro.ui.barang.BarangListFragment
 import com.zahwaalviana.simpro.ui.kemasan.KemasanListFragment
 import com.zahwaalviana.simpro.ui.laporan.LaporanFragment
+import com.zahwaalviana.simpro.ui.laporan_keuangan.LaporanKeuanganFragment
 import com.zahwaalviana.simpro.ui.laporan_penjualan.LaporanPenjualanFragment
 import com.zahwaalviana.simpro.ui.pengeluaran.PengeluaranListFragment
 import com.zahwaalviana.simpro.ui.penjualan.PenjualanFormActivity
@@ -148,6 +149,13 @@ class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
                 supportActionBar?.title = "Laporan Penjualan"
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.container_admin, LaporanPenjualanFragment())
+                    .commit()
+            }
+
+            R.id.nav_laporan_keuangan -> {
+                supportActionBar?.title = "Laporan Keuangan"
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.container_admin, LaporanKeuanganFragment())
                     .commit()
             }
 

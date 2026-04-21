@@ -55,6 +55,11 @@
             android:icon="@drawable/ic_laporan"
             android:title="Laporan Penjualan" />
 
+        <item
+            android:id="@+id/nav_laporan_keuangan"
+            android:icon="@drawable/ic_laporan"
+            android:title="Laporan Keuangan" />
+
     </group>
 
     <item android:title="Akun">
