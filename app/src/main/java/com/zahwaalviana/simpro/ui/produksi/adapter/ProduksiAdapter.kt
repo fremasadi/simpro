@@ -1,15 +1,11 @@
 package com.zahwaalviana.simpro.ui.produksi.adapter
 
-import android.content.res.ColorStateList
-import android.graphics.Color
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.chip.Chip
 import com.zahwaalviana.simpro.data.model.ProduksiWithItems
 import com.zahwaalviana.simpro.databinding.ItemProduksiBinding
-import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -20,8 +16,7 @@ class ProduksiAdapter(
     private val onDeleteClick: (ProduksiWithItems) -> Unit
 ) : RecyclerView.Adapter<ProduksiAdapter.ProduksiViewHolder>() {
 
-    private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
-    private val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
+    private val dateFormat = SimpleDateFormat("dd/MM/yy HH:mm", Locale("id", "ID"))
 
     inner class ProduksiViewHolder(private val binding: ItemProduksiBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -32,49 +27,20 @@ class ProduksiAdapter(
                 val items = produksiWithItems.items
 
                 tvTanggalProduksi.text = dateFormat.format(Date(produksi.tanggalProduksi))
-                tvMandor.text = "Mandor: ${produksi.mandorName}"
-                tvJumlahItem.text = "${items.size} Item Produksi"
+                tvMandor.text = produksi.mandorName
+                
+                // Menampilkan nama-nama item barang yang diproduksi
+                val summary = items.joinToString(", ") { "${it.barangNama} x${it.jumlahProduksi}" }
+                tvBarangSummary.text = if (summary.isNotEmpty()) summary else "Tidak ada item"
 
-                // Hanya sembunyikan tombol EDIT untuk admin, DELETE tetap ada
+                // Hanya sembunyikan tombol EDIT untuk admin
                 if (userRole == "admin") {
                     ivEdit.visibility = View.GONE
                 } else {
                     ivEdit.visibility = View.VISIBLE
                 }
                 
-                // Tombol DELETE selalu terlihat (atau sesuaikan jika mandor juga boleh hapus)
                 ivDelete.visibility = View.VISIBLE
-
-                // Clear previous chips
-                chipGroupItems.removeAllViews()
-
-                // Add chips for each item
-                items.take(3).forEach { item ->
-                    val chip = Chip(binding.root.context).apply {
-                        text = "${item.barangNama} - ${item.kemasanNama}: ${item.jumlahProduksi}"
-                        chipBackgroundColor = ColorStateList.valueOf(
-                            Color.parseColor("#FFF0F3")
-                        )
-                        setTextColor(Color.parseColor("#E59BA6"))
-                        isClickable = false
-                        isCheckable = false
-                    }
-                    chipGroupItems.addView(chip)
-                }
-
-                // Add "more" chip if there are more than 3 items
-                if (items.size > 3) {
-                    val moreChip = Chip(binding.root.context).apply {
-                        text = "+${items.size - 3} lainnya"
-                        chipBackgroundColor = ColorStateList.valueOf(
-                            Color.parseColor("#E59BA6")
-                        )
-                        setTextColor(Color.WHITE)
-                        isClickable = false
-                        isCheckable = false
-                    }
-                    chipGroupItems.addView(moreChip)
-                }
 
                 ivEdit.setOnClickListener {
                     onEditClick(produksiWithItems)

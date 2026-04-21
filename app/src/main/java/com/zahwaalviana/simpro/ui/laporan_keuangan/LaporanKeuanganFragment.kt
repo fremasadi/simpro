@@ -3,7 +3,6 @@ package com.zahwaalviana.simpro.ui.laporan_keuangan
 import android.app.DatePickerDialog
 import android.content.ContentValues
 import android.content.Intent
-import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
@@ -17,12 +16,9 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
-import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.firestore.FirebaseFirestore
-import com.zahwaalviana.simpro.data.model.Penjualan
-import com.zahwaalviana.simpro.data.model.Pengeluaran
 import com.zahwaalviana.simpro.databinding.FragmentLaporanBinding
 import com.zahwaalviana.simpro.ui.laporan.LaporanAdapter
 import com.zahwaalviana.simpro.ui.laporan.LaporanItem
@@ -127,8 +123,9 @@ class LaporanKeuanganFragment : Fragment() {
             .whereLessThanOrEqualTo("tanggal", endTs)
             .get().addOnSuccessListener { penjualanDocs ->
                 penjualanDocs.forEach { doc ->
-                    val p = doc.toObject(Penjualan::class.java)
-                    financeRecords.add(FinanceRecord(p.tanggal, "Penjualan Produk", income = p.totalHarga))
+                    val tgl = doc.getLong("tanggal") ?: 0L
+                    val harga = doc.getLong("total_harga")?.toInt() ?: 0
+                    financeRecords.add(FinanceRecord(tgl, "Penjualan Produk", income = harga))
                 }
 
                 // Fetch Pengeluaran
@@ -147,7 +144,12 @@ class LaporanKeuanganFragment : Fragment() {
                         } catch (e: Exception) {}
                     }
                     processRecords(financeRecords, isExportPdf)
+                }.addOnFailureListener {
+                    processRecords(financeRecords, isExportPdf)
                 }
+            }.addOnFailureListener {
+                binding.progressBar.visibility = View.GONE
+                Toast.makeText(context, "Gagal mengambil data penjualan", Toast.LENGTH_SHORT).show()
             }
     }
 
@@ -186,6 +188,8 @@ class LaporanKeuanganFragment : Fragment() {
 
         if (isExportPdf && sorted.isNotEmpty()) {
             generateFinancePdf(sorted)
+        } else if (isExportPdf) {
+            Toast.makeText(context, "Tidak ada data untuk diekspor", Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -237,7 +241,7 @@ class LaporanKeuanganFragment : Fragment() {
             canvas.drawText(formatter.format(runningSaldo), cols[4], y, textPaint)
             
             y += 20f
-            if (y > 780) { /* new page logic skip for brevity */ }
+            if (y > 780) { /* skip multi-page logic for simplicity */ }
         }
 
         y += 10f
@@ -260,19 +264,29 @@ class LaporanKeuanganFragment : Fragment() {
 
     private fun savePdf(pdf: PdfDocument, fileName: String) {
         try {
-            val resolver = requireContext().contentResolver
-            val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
-                put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Simpro")
-            }
-            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
-            uri?.let {
-                resolver.openOutputStream(it)?.use { pdf.writeTo(it) }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val resolver = requireContext().contentResolver
+                val contentValues = ContentValues().apply {
+                    put(MediaStore.MediaColumns.DISPLAY_NAME, fileName)
+                    put(MediaStore.MediaColumns.MIME_TYPE, "application/pdf")
+                    put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Simpro")
+                }
+                val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
+                uri?.let {
+                    resolver.openOutputStream(it)?.use { pdf.writeTo(it) }
+                    showSuccessDialog(uri, fileName)
+                }
+            } else {
+                val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                val simproDir = File(downloadsDir, "Simpro")
+                if (!simproDir.exists()) simproDir.mkdirs()
+                val file = File(simproDir, fileName)
+                pdf.writeTo(FileOutputStream(file))
+                val uri = FileProvider.getUriForFile(requireContext(), "${requireContext().packageName}.provider", file)
                 showSuccessDialog(uri, fileName)
             }
         } catch (e: Exception) {
-            Toast.makeText(context, "Gagal: ${e.message}", Toast.LENGTH_SHORT).show()
+            Toast.makeText(context, "Gagal simpan PDF: ${e.message}", Toast.LENGTH_SHORT).show()
         } finally {
             pdf.close()
         }
@@ -281,12 +295,17 @@ class LaporanKeuanganFragment : Fragment() {
     private fun showSuccessDialog(uri: Uri, fileName: String) {
         AlertDialog.Builder(requireContext())
             .setTitle("Berhasil")
-            .setMessage("Laporan disimpan: $fileName")
+            .setMessage("Laporan berhasil disimpan: $fileName")
             .setPositiveButton("Buka PDF") { _, _ ->
-                startActivity(Intent(Intent.ACTION_VIEW).apply {
+                val intent = Intent(Intent.ACTION_VIEW).apply {
                     setDataAndType(uri, "application/pdf")
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                })
+                }
+                try {
+                    startActivity(intent)
+                } catch (e: Exception) {
+                    Toast.makeText(context, "Tidak ada aplikasi untuk membuka PDF", Toast.LENGTH_SHORT).show()
+                }
             }
             .setNegativeButton("Tutup", null).show()
     }

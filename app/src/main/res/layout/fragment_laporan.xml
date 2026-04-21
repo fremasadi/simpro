@@ -156,15 +156,6 @@
                 <TextView
                     android:layout_width="100dp"
                     android:layout_height="wrap_content"
-                    android:text="Tipe"
-                    android:textStyle="bold"
-                    android:textSize="13sp"
-                    android:textColor="#212121" />
-
-                <TextView
-                    android:layout_width="100dp"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="8dp"
                     android:text="Tanggal"
                     android:textStyle="bold"
                     android:textSize="13sp"

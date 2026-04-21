@@ -13,23 +13,9 @@
         android:background="?attr/selectableItemBackground">
 
         <TextView
-            android:id="@+id/tvItemType"
-            android:layout_width="100dp"
-            android:layout_height="wrap_content"
-            android:text="TYPE"
-            android:textSize="11sp"
-            android:textStyle="bold"
-            android:textColor="#E59BA6"
-            android:background="@drawable/bg_chip_light"
-            android:paddingHorizontal="8dp"
-            android:paddingVertical="4dp"
-            android:gravity="center" />
-
-        <TextView
             android:id="@+id/tvItemDate"
             android:layout_width="100dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
             android:text="15/05/2024"
             android:textSize="12sp"
             android:textColor="#424242" />
@@ -78,5 +64,11 @@
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#EEEEEE" />
+
+    <TextView
+        android:id="@+id/tvItemType"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
 
 </LinearLayout>
