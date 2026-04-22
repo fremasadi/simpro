@@ -113,12 +113,12 @@ class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
                     .commit()
             }
 
-            R.id.nav_produksi -> {
-                supportActionBar?.title = "Produksi"
-                supportFragmentManager.beginTransaction()
-                    .replace(R.id.container_admin, ProduksiListFragment.newInstance("admin"))
-                    .commit()
-            }
+//            R.id.nav_produksi -> {
+//                supportActionBar?.title = "Produksi"
+//                supportFragmentManager.beginTransaction()
+//                    .replace(R.id.container_admin, ProduksiListFragment.newInstance("admin"))
+//                    .commit()
+//            }
 
             R.id.nav_pengeluran -> {
                 supportActionBar?.title = "Pengeluaran"
