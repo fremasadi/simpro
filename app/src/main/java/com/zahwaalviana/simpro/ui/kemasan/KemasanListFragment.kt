@@ -1,8 +1,11 @@
 package com.zahwaalviana.simpro.ui.kemasan
 
 import Kemasan
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -25,7 +28,9 @@ class KemasanListFragment : Fragment() {
     private lateinit var db: FirebaseFirestore
     private lateinit var adapter: KemasanAdapter
     private var kemasanListener: ListenerRegistration? = null
-    private val kemasanList = mutableListOf<Kemasan>()
+    
+    private val allKemasanList = mutableListOf<Kemasan>()
+    private val displayList = mutableListOf<Kemasan>()
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -48,13 +53,12 @@ class KemasanListFragment : Fragment() {
     }
 
     private fun setupToolbar() {
-        // Toolbar sudah diatur di MainActivity, jadi hide toolbar fragment
         binding.appBarLayout.visibility = View.GONE
     }
 
     private fun setupRecyclerView() {
         adapter = KemasanAdapter(
-            kemasanList,
+            displayList,
             onEditClick = { kemasan ->
                 val intent = Intent(requireContext(), KemasanFormActivity::class.java)
                 intent.putExtra("KEMASAN_ID", kemasan.id)
@@ -77,11 +81,38 @@ class KemasanListFragment : Fragment() {
         binding.swipeRefresh.setOnRefreshListener {
             loadKemasanData()
         }
+
+        binding.etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                applyFilter()
+            }
+        })
     }
 
+    private fun applyFilter() {
+        val query = binding.etSearch.text.toString().trim()
+        val filtered = if (query.isEmpty()) {
+            allKemasanList
+        } else {
+            allKemasanList.filter { item ->
+                item.namaKemasan.contains(query, ignoreCase = true) ||
+                item.satuan.contains(query, ignoreCase = true)
+            }
+        }
+
+        displayList.clear()
+        displayList.addAll(filtered)
+        adapter.notifyDataSetChanged()
+        updateEmptyState()
+    }
+
+    @SuppressLint("NotifyDataSetChanged")
     private fun loadKemasanData() {
         showLoading(true)
 
+        kemasanListener?.remove()
         kemasanListener = db.collection("master_kemasan")
             .orderBy("created_at", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, error ->
@@ -93,7 +124,7 @@ class KemasanListFragment : Fragment() {
                     return@addSnapshotListener
                 }
 
-                kemasanList.clear()
+                allKemasanList.clear()
                 snapshots?.documents?.forEach { doc ->
                     val kemasan = Kemasan(
                         id = doc.id,
@@ -101,11 +132,10 @@ class KemasanListFragment : Fragment() {
                         satuan = doc.getString("satuan") ?: "",
                         stok = doc.getDouble("stok") ?: 0.0
                     )
-                    kemasanList.add(kemasan)
+                    allKemasanList.add(kemasan)
                 }
 
-                adapter.notifyDataSetChanged()
-                updateEmptyState()
+                applyFilter()
             }
     }
 
@@ -133,7 +163,7 @@ class KemasanListFragment : Fragment() {
     }
 
     private fun updateEmptyState() {
-        if (kemasanList.isEmpty()) {
+        if (displayList.isEmpty()) {
             binding.tvEmpty.visibility = View.VISIBLE
             binding.rvKemasan.visibility = View.GONE
         } else {

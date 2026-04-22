@@ -27,7 +27,14 @@ class ProduksiAdapter(
                 val items = produksiWithItems.items
 
                 tvTanggalProduksi.text = dateFormat.format(Date(produksi.tanggalProduksi))
-                tvMandor.text = produksi.mandorName
+                
+                // Sembunyikan kolom mandor jika user adalah mandor
+                if (userRole == "mandor") {
+                    tvMandor.visibility = View.GONE
+                } else {
+                    tvMandor.visibility = View.VISIBLE
+                    tvMandor.text = produksi.mandorName
+                }
                 
                 // Menampilkan nama-nama item barang yang diproduksi
                 val summary = items.joinToString(", ") { "${it.barangNama} x${it.jumlahProduksi}" }

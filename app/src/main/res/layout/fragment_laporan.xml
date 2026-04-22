@@ -140,30 +140,32 @@
         app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical">
 
             <!-- TABLE HEADER -->
             <LinearLayout
                 android:id="@+id/headerTable"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:padding="12dp"
                 android:background="#F5F5F5">
 
                 <TextView
-                    android:layout_width="100dp"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="1"
                     android:text="Tanggal"
                     android:textStyle="bold"
                     android:textSize="13sp"
                     android:textColor="#212121" />
 
                 <TextView
-                    android:layout_width="200dp"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="2"
                     android:layout_marginHorizontal="8dp"
                     android:text="Keterangan / Detail"
                     android:textStyle="bold"
@@ -172,8 +174,9 @@
 
                 <TextView
                     android:id="@+id/tvHeaderAksi"
-                    android:layout_width="60dp"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
+                    android:layout_weight="0.6"
                     android:text="Aksi"
                     android:gravity="center"
                     android:textStyle="bold"

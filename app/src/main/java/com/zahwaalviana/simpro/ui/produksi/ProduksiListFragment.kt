@@ -7,12 +7,12 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
@@ -88,6 +88,13 @@ class ProduksiListFragment : Fragment() {
         binding.fabAdd.visibility =
             if (userRole == "mandor") View.VISIBLE
             else View.GONE
+        
+        // Sembunyikan kolom mandor di header jika user adalah mandor
+        if (userRole == "mandor") {
+            val tvHeaderMandor = binding.headerTable.getChildAt(1) as? TextView
+            tvHeaderMandor?.visibility = View.GONE
+            binding.tilSearch.hint = "Cari item produksi..."
+        }
     }
 
     private fun setupRecyclerView() {
@@ -318,52 +325,40 @@ class ProduksiListFragment : Fragment() {
     private fun showDeleteConfirmation(item: ProduksiWithItems) {
         AlertDialog.Builder(requireContext())
             .setTitle("Hapus Produksi")
-            .setMessage("Apakah Anda yakin ingin menghapus data produksi ini? Stok barang akan dikurangi kembali.")
-            .setPositiveButton("Hapus") { _, _ -> deleteProduksi(item) }
+            .setMessage("Apakah Anda yakin ingin menghapus data produksi ini?")
+            .setPositiveButton("Hapus") { _, _ ->
+                deleteProduksi(item)
+            }
             .setNegativeButton("Batal", null)
             .show()
     }
 
     private fun deleteProduksi(item: ProduksiWithItems) {
-        db.collection("produksi_items")
-            .whereEqualTo("produksi_id", item.produksi.id)
-            .get()
-            .addOnSuccessListener { itemDocs ->
-                val batch = db.batch()
+        showLoading(true)
+        val batch = db.batch()
 
-                itemDocs.documents.forEach { doc ->
-                    val varianId = doc.getString("varian_id") ?: ""
-                    val jumlah = doc.getLong("jumlah_produksi")?.toInt() ?: 0
+        // 1. Kembalikan stok di master_kemasan (jika ada logika itu, tapi biasanya produksi hanya menambah stok barang_varian)
+        // 2. Kurangi stok di barang_varian yang sudah diproduksi
+        item.items.forEach { pItem ->
+            val varianRef = db.collection("barang_varian").document(pItem.varianId)
+            batch.update(varianRef, "stok", FieldValue.increment(-pItem.jumlahProduksi.toLong()))
+            batch.delete(db.collection("produksi_items").document(pItem.id))
+        }
 
-                    if (varianId.isNotEmpty() && jumlah > 0) {
-                        batch.update(
-                            db.collection("barang_varian").document(varianId),
-                            "stok", FieldValue.increment(-jumlah.toLong())
-                        )
-                    }
-                    batch.delete(doc.reference)
-                }
+        // 3. Hapus data produksi utama
+        batch.delete(db.collection("produksi").document(item.produksi.id))
 
-                batch.delete(db.collection("produksi").document(item.produksi.id))
-
-                batch.commit()
-                    .addOnSuccessListener {
-                        Toast.makeText(requireContext(), "Data berhasil dihapus", Toast.LENGTH_SHORT).show()
-                    }
-                    .addOnFailureListener { e ->
-                        Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                    }
-            }
+        batch.commit().addOnSuccessListener {
+            showLoading(false)
+            Toast.makeText(requireContext(), "Data produksi berhasil dihapus", Toast.LENGTH_SHORT).show()
+        }.addOnFailureListener { e ->
+            showLoading(false)
+            Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
     }
 
     private fun updateEmptyState() {
-        if (displayList.isEmpty()) {
-            binding.tvEmpty.visibility = View.VISIBLE
-            binding.rvProduksi.visibility = View.GONE
-        } else {
-            binding.tvEmpty.visibility = View.GONE
-            binding.rvProduksi.visibility = View.VISIBLE
-        }
+        binding.tvEmpty.visibility = if (displayList.isEmpty()) View.VISIBLE else View.GONE
     }
 
     private fun showLoading(show: Boolean) {
@@ -372,7 +367,6 @@ class ProduksiListFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
-        produksiListener?.remove()
         _binding = null
     }
 }
