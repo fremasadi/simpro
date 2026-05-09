@@ -10,6 +10,7 @@ import android.widget.AutoCompleteTextView
 import android.widget.ImageView
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.auth.FirebaseAuth
@@ -31,6 +32,7 @@ class ProduksiFormActivity : AppCompatActivity() {
     private val itemViews = mutableListOf<View>()
     private val varianList = mutableListOf<BarangVarian>()
     private var varianMap = mutableMapOf<String, BarangVarian>()
+    private var varianIdMap = mutableMapOf<String, BarangVarian>()
     private val mandorList = mutableListOf<Pair<String, String>>() // (id, name)
     private var mandorMap = mutableMapOf<String, String>() // name -> id
 
@@ -127,6 +129,7 @@ class ProduksiFormActivity : AppCompatActivity() {
             .addOnSuccessListener { varianDocs ->
                 varianList.clear()
                 varianMap.clear()
+                varianIdMap.clear()
 
                 val totalVarian = varianDocs.size()
                 var processedVarian = 0
@@ -156,6 +159,7 @@ class ProduksiFormActivity : AppCompatActivity() {
                         val displayText = "$barangNama - $kemasanNama ($kemasanSatuan)"
                         varianList.add(varian)
                         varianMap[displayText] = varian
+                        varianIdMap[varian.id] = varian
 
                         processedVarian++
                         if (processedVarian == totalVarian) {
@@ -354,7 +358,7 @@ class ProduksiFormActivity : AppCompatActivity() {
                     val batch = db.batch()
                     batch.delete(db.collection("produksi_items").document(itemId))
 
-                    // Decrement stok for removed item
+                    // Decrement produced goods stock and return kemasan stock for removed item
                     if (oldData != null) {
                         val (oldVarianId, oldJumlah) = oldData
                         if (oldVarianId.isNotEmpty() && oldJumlah > 0) {
@@ -362,6 +366,14 @@ class ProduksiFormActivity : AppCompatActivity() {
                                 db.collection("barang_varian").document(oldVarianId),
                                 "stok", FieldValue.increment(-oldJumlah.toLong())
                             )
+                            
+                            val oldVarian = varianIdMap[oldVarianId]
+                            if (oldVarian != null) {
+                                batch.update(
+                                    db.collection("master_kemasan").document(oldVarian.kemasanId),
+                                    "stok", FieldValue.increment(oldJumlah.toLong())
+                                )
+                            }
                         }
                     }
 
@@ -493,67 +505,138 @@ class ProduksiFormActivity : AppCompatActivity() {
 
         // Accumulate stok changes per varian: varianId -> total increment
         val stokIncrements = mutableMapOf<String, Long>()
+        // Accumulate kemasan usage per kemasanId: kemasanId -> total increment (negative means decrement)
+        val kemasanIncrements = mutableMapOf<String, Long>()
+
+        val currentItemsData = mutableListOf<Triple<View, BarangVarian, Int>>()
 
         itemViews.forEach { itemView ->
-            val itemId = itemView.tag as? String
             val actvVarian = itemView.findViewById<AutoCompleteTextView>(R.id.actvVarian)
             val etJumlah = itemView.findViewById<TextInputEditText>(R.id.etJumlahProduksi)
-
-            val varianText = actvVarian.text.toString()
-            val varian = varianMap[varianText]
+            val varian = varianMap[actvVarian.text.toString()]
             val jumlah = etJumlah.text.toString().toIntOrNull() ?: 0
 
-            if (varian != null) {
-                // Calculate expired_at = tanggal_produksi + shelf_life_hari
-                val expiredCal = Calendar.getInstance()
-                expiredCal.timeInMillis = selectedDate.timeInMillis
-                expiredCal.add(Calendar.DAY_OF_YEAR, varian.shelfLifeHari)
-
-                val itemData = hashMapOf(
-                    "produksi_id" to produksiId,
-                    "varian_id" to varian.id,
-                    "jumlah_produksi" to jumlah,
-                    "expired_at" to expiredCal.timeInMillis,
-                    "updated_at" to System.currentTimeMillis()
-                )
-
-                if (!itemId.isNullOrEmpty()) {
-                    val docRef = db.collection("produksi_items").document(itemId)
-                    batch.update(docRef, itemData as Map<String, Any>)
-
-                    // Edit mode: calculate stok diff
-                    val oldData = oldItemDataMap[itemId]
-                    if (oldData != null) {
-                        val (oldVarianId, oldJumlah) = oldData
-                        if (oldVarianId == varian.id) {
-                            // Same varian, apply diff only
-                            val diff = jumlah - oldJumlah
-                            stokIncrements[varian.id] = (stokIncrements[varian.id] ?: 0L) + diff
-                        } else {
-                            // Varian changed: decrement old, increment new
-                            stokIncrements[oldVarianId] = (stokIncrements[oldVarianId] ?: 0L) - oldJumlah
-                            stokIncrements[varian.id] = (stokIncrements[varian.id] ?: 0L) + jumlah
-                        }
-                    } else {
-                        // Existing item but no old data (shouldn't happen, but safe fallback)
-                        stokIncrements[varian.id] = (stokIncrements[varian.id] ?: 0L) + jumlah
-                    }
-                } else {
-                    itemData["created_at"] = System.currentTimeMillis()
-                    val docRef = db.collection("produksi_items").document()
-                    batch.set(docRef, itemData)
-
-                    // New item: full increment
-                    stokIncrements[varian.id] = (stokIncrements[varian.id] ?: 0L) + jumlah
-                }
+            if (varian != null && jumlah > 0) {
+                currentItemsData.add(Triple(itemView, varian, jumlah))
             }
         }
 
-        // Apply stok increments to batch
+        // Calculate increments/decrements for both Produced Goods and Kemasan
+        currentItemsData.forEach { (view, varian, jumlah) ->
+            val itemId = view.tag as? String
+            
+            if (!itemId.isNullOrEmpty()) {
+                val oldData = oldItemDataMap[itemId]
+                if (oldData != null) {
+                    val (oldVarianId, oldJumlah) = oldData
+                    
+                    // Produced Goods diff
+                    if (oldVarianId == varian.id) {
+                        val diff = jumlah - oldJumlah
+                        stokIncrements[varian.id] = (stokIncrements[varian.id] ?: 0L) + diff
+                    } else {
+                        stokIncrements[oldVarianId] = (stokIncrements[oldVarianId] ?: 0L) - oldJumlah
+                        stokIncrements[varian.id] = (stokIncrements[varian.id] ?: 0L) + jumlah
+                    }
+
+                    // Kemasan diff
+                    val oldVarian = varianIdMap[oldVarianId]
+                    if (oldVarian != null) {
+                        if (oldVarian.kemasanId == varian.kemasanId) {
+                            val diff = jumlah - oldJumlah
+                            kemasanIncrements[varian.kemasanId] = (kemasanIncrements[varian.kemasanId] ?: 0L) - diff
+                        } else {
+                            kemasanIncrements[oldVarian.kemasanId] = (kemasanIncrements[oldVarian.kemasanId] ?: 0L) + oldJumlah
+                            kemasanIncrements[varian.kemasanId] = (kemasanIncrements[varian.kemasanId] ?: 0L) - jumlah
+                        }
+                    }
+                }
+            } else {
+                stokIncrements[varian.id] = (stokIncrements[varian.id] ?: 0L) + jumlah
+                kemasanIncrements[varian.kemasanId] = (kemasanIncrements[varian.kemasanId] ?: 0L) - jumlah
+            }
+        }
+
+        // Validate kemasan stock
+        val neededKemasans = kemasanIncrements.filter { it.value < 0 }
+        if (neededKemasans.isEmpty()) {
+            executeFinalSave(produksiId, batch, currentItemsData, stokIncrements, kemasanIncrements)
+            return
+        }
+
+        db.collection("master_kemasan")
+            .whereIn(com.google.firebase.firestore.FieldPath.documentId(), neededKemasans.keys.toList())
+            .get()
+            .addOnSuccessListener { snapshots ->
+                val insufficient = mutableListOf<String>()
+                snapshots.forEach { doc ->
+                    val currentStock = doc.getDouble("stok") ?: 0.0
+                    val change = neededKemasans[doc.id] ?: 0L
+                    val needed = -change
+                    if (currentStock < needed) {
+                        val name = doc.getString("nama_kemasan") ?: "Kemasan"
+                        insufficient.add("$name (Tersedia: $currentStock, Butuh: $needed)")
+                    }
+                }
+
+                if (insufficient.isNotEmpty()) {
+                    showLoading(false)
+                    AlertDialog.Builder(this)
+                        .setTitle("Stok Kemasan Tidak Mencukupi")
+                        .setMessage("Berikut kemasan yang kurang untuk produksi ini:\n\n- ${insufficient.joinToString("\n- ")}")
+                        .setPositiveButton("OK", null)
+                        .show()
+                } else {
+                    executeFinalSave(produksiId, batch, currentItemsData, stokIncrements, kemasanIncrements)
+                }
+            }
+            .addOnFailureListener { e ->
+                showLoading(false)
+                Toast.makeText(this, "Gagal validasi kemasan: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun executeFinalSave(
+        produksiId: String,
+        batch: com.google.firebase.firestore.WriteBatch,
+        currentItemsData: List<Triple<View, BarangVarian, Int>>,
+        stokIncrements: Map<String, Long>,
+        kemasanIncrements: Map<String, Long>
+    ) {
+        currentItemsData.forEach { (view, varian, jumlah) ->
+            val itemId = view.tag as? String
+            
+            val expiredCal = Calendar.getInstance()
+            expiredCal.timeInMillis = selectedDate.timeInMillis
+            expiredCal.add(Calendar.DAY_OF_YEAR, varian.shelfLifeHari)
+
+            val itemData = hashMapOf(
+                "produksi_id" to produksiId,
+                "varian_id" to varian.id,
+                "jumlah_produksi" to jumlah,
+                "expired_at" to expiredCal.timeInMillis,
+                "updated_at" to System.currentTimeMillis()
+            )
+
+            if (!itemId.isNullOrEmpty()) {
+                val docRef = db.collection("produksi_items").document(itemId)
+                batch.update(docRef, itemData as Map<String, Any>)
+            } else {
+                itemData["created_at"] = System.currentTimeMillis()
+                val docRef = db.collection("produksi_items").document()
+                batch.set(docRef, itemData)
+            }
+        }
+
         stokIncrements.forEach { (varianId, increment) ->
             if (increment != 0L) {
-                val varianRef = db.collection("barang_varian").document(varianId)
-                batch.update(varianRef, "stok", FieldValue.increment(increment))
+                batch.update(db.collection("barang_varian").document(varianId), "stok", FieldValue.increment(increment))
+            }
+        }
+
+        kemasanIncrements.forEach { (kemasanId, increment) ->
+            if (increment != 0L) {
+                batch.update(db.collection("master_kemasan").document(kemasanId), "stok", FieldValue.increment(increment))
             }
         }
 
