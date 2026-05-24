@@ -25,11 +25,15 @@ class BarangAdapter(
             binding.apply {
                 tvNamaBarang.text = barangWithVarian.barang.namaBarang
                 
-                // Buat ringkasan varian: "Kemasan (Stok | Harga)"
-                val summary = barangWithVarian.varianList.joinToString(", ") { 
-                    "${it.kemasanNama} (${it.stok} | ${currencyFormat.format(it.hargaJual)})"
+                if (barangWithVarian.varianList.isEmpty()) {
+                    tvVarian.text = "Belum ada varian"
+                    tvStok.text = "-"
+                    tvHarga.text = "-"
+                } else {
+                    tvVarian.text = barangWithVarian.varianList.joinToString("\n") { it.kemasanNama }
+                    tvStok.text = barangWithVarian.varianList.joinToString("\n") { "${it.stok} ${it.kemasanSatuan}" }
+                    tvHarga.text = barangWithVarian.varianList.joinToString("\n") { currencyFormat.format(it.hargaJual) }
                 }
-                tvVarianSummary.text = if (summary.isEmpty()) "Belum ada varian" else summary
 
                 ivEdit.setOnClickListener { onEditClick(barangWithVarian) }
                 ivDelete.setOnClickListener { onDeleteClick(barangWithVarian) }

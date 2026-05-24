@@ -117,6 +117,7 @@ class LaporanFragment : Fragment() {
             { _, year, month, dayOfMonth ->
                 val selectedDate = Calendar.getInstance()
                 selectedDate.set(year, month, dayOfMonth, 0, 0, 0)
+                selectedDate.set(Calendar.MILLISECOND, 0)
                 onDateSelected(selectedDate)
             },
             calendar.get(Calendar.YEAR),
@@ -130,11 +131,13 @@ class LaporanFragment : Fragment() {
         binding.tvStatus.text = "Mengambil data..."
 
         val startTs = startDate!!.timeInMillis
-        val endTs = endDate!!.timeInMillis + 86400000
+        val endTs = endDate!!.timeInMillis + 86399999
 
+        // DIUBAH: Menambahkan orderBy descending agar data terbaru muncul di atas
         var query: Query = db.collection("produksi")
             .whereGreaterThanOrEqualTo("tanggal_produksi", startTs)
             .whereLessThanOrEqualTo("tanggal_produksi", endTs)
+            .orderBy("tanggal_produksi", Query.Direction.DESCENDING)
 
         if (userRole == "mandor") {
             query = query.whereEqualTo("mandor_id", userId)
@@ -225,6 +228,7 @@ class LaporanFragment : Fragment() {
     }
 
     private fun updateUI(list: List<Produksi>, isExportPdf: Boolean) {
+        // Memastikan hasil akhir tetap diurutkan descending sebelum ditampilkan
         val sortedList = list.sortedByDescending { it.tanggalProduksi }
         listItems.clear()
         var totalQty = 0

@@ -293,7 +293,7 @@ class ProduksiFormActivity : AppCompatActivity() {
     }
 
     private fun showDatePicker() {
-        DatePickerDialog(
+        val datePicker = DatePickerDialog(
             this,
             { _, year, month, day ->
                 selectedDate.set(year, month, day)
@@ -305,7 +305,12 @@ class ProduksiFormActivity : AppCompatActivity() {
             selectedDate.get(Calendar.YEAR),
             selectedDate.get(Calendar.MONTH),
             selectedDate.get(Calendar.DAY_OF_MONTH)
-        ).show()
+        )
+        
+        // Batasi agar tidak bisa pilih tanggal sebelum hari ini
+        datePicker.datePicker.minDate = System.currentTimeMillis() - 1000
+        
+        datePicker.show()
     }
 
     private fun addItemView(itemId: String = "", varianId: String = "", jumlah: Int = 0) {

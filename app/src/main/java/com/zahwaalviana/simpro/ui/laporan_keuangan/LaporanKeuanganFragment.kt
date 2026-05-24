@@ -105,16 +105,20 @@ class LaporanKeuanganFragment : Fragment() {
         DatePickerDialog(requireContext(), { _, y, m, d ->
             val cal = Calendar.getInstance()
             cal.set(y, m, d, 0, 0, 0)
+            cal.set(Calendar.MILLISECOND, 0) // Penting: Reset milidetik agar data di jam 00:00:00 terbaca
             onDateSelected(cal)
         }, calendar.get(Calendar.YEAR), calendar.get(Calendar.MONTH), calendar.get(Calendar.DAY_OF_MONTH)).show()
     }
 
     private fun fetchData(isExportPdf: Boolean) {
+        if (startDate == null || endDate == null) return
+
         binding.progressBar.visibility = View.VISIBLE
         binding.tvStatus.text = "Mengambil data keuangan..."
 
         val startTs = startDate!!.timeInMillis
-        val endTs = endDate!!.timeInMillis + 86400000
+        // Tambahkan 23:59:59.999 agar mencakup seluruh hari terakhir
+        val endTs = endDate!!.timeInMillis + 86399999
 
         val financeRecords = mutableListOf<FinanceRecord>()
         
@@ -155,7 +159,8 @@ class LaporanKeuanganFragment : Fragment() {
     }
 
     private fun processRecords(records: List<FinanceRecord>, isExportPdf: Boolean) {
-        val sorted = records.sortedBy { it.date }
+        // DIUBAH: Menggunakan sortedByDescending agar data terbaru muncul di atas
+        val sorted = records.sortedByDescending { it.date }
         listItems.clear()
         
         var totalIncome = 0
@@ -188,6 +193,7 @@ class LaporanKeuanganFragment : Fragment() {
         adapter.notifyDataSetChanged()
 
         if (isExportPdf && sorted.isNotEmpty()) {
+            // PDF tetap menggunakan data sorted (descending) atau jika ingin PDF ascending bisa diubah di sini
             generateFinancePdf(sorted)
         } else if (isExportPdf) {
             Toast.makeText(context, "Tidak ada data untuk diekspor", Toast.LENGTH_SHORT).show()
@@ -230,7 +236,10 @@ class LaporanKeuanganFragment : Fragment() {
         var totalIn = 0
         var totalOut = 0
 
-        list.forEach { rec ->
+        // Karena list masuk secara descending, kita balik dulu untuk kalkulasi saldo berjalan di PDF
+        val pdfList = list.reversed()
+
+        pdfList.forEach { rec ->
             runningSaldo += (rec.income - rec.expense)
             totalIn += rec.income
             totalOut += rec.expense

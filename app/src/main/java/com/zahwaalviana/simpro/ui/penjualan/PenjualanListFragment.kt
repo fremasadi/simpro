@@ -22,6 +22,7 @@ import com.zahwaalviana.simpro.data.model.PenjualanWithItems
 import com.zahwaalviana.simpro.databinding.FragmentPenjualanListBinding
 import com.zahwaalviana.simpro.ui.penjualan.adapter.PenjualanAdapter
 import java.text.SimpleDateFormat
+import java.util.Date
 import java.util.Locale
 
 class PenjualanListFragment : Fragment() {
@@ -211,7 +212,7 @@ class PenjualanListFragment : Fragment() {
             matchSearch && matchDate
         }
 
-        // Apply Sorting
+        // Apply Sorting: diurutkan secara Descending (terbaru di atas) secara default
         filtered = when (currentSortColumn) {
             "tanggal" -> {
                 if (isAscending) filtered.sortedBy { it.penjualan.tanggal }
@@ -221,7 +222,7 @@ class PenjualanListFragment : Fragment() {
                 if (isAscending) filtered.sortedBy { it.penjualan.totalHarga }
                 else filtered.sortedByDescending { it.penjualan.totalHarga }
             }
-            else -> filtered
+            else -> filtered.sortedByDescending { it.penjualan.tanggal }
         }
 
         penjualanList.clear()

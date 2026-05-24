@@ -25,15 +25,30 @@
             android:maxLines="2" />
 
         <TextView
-            android:id="@+id/tvVarianSummary"
-            android:layout_width="250dp"
+            android:id="@+id/tvVarian"
+            android:layout_width="120dp"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="8dp"
-            android:text="Varian 1 (10 | Rp5.000), Varian 2..."
+            android:text="Varian"
             android:textSize="12sp"
-            android:textColor="#424242"
-            android:ellipsize="end"
-            android:maxLines="2" />
+            android:textColor="#424242" />
+
+        <TextView
+            android:id="@+id/tvStok"
+            android:layout_width="80dp"
+            android:layout_height="wrap_content"
+            android:text="Stok"
+            android:textSize="12sp"
+            android:textColor="#424242" />
+
+        <TextView
+            android:id="@+id/tvHarga"
+            android:layout_width="120dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="8dp"
+            android:text="Harga"
+            android:textSize="12sp"
+            android:textColor="#424242" />
 
         <LinearLayout
             android:layout_width="80dp"
@@ -70,6 +85,12 @@
     <!-- Hidden original components to maintain binding compatibility -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvVarian"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/tvVarianSummary"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:visibility="gone" />

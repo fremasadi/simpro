@@ -41,6 +41,9 @@ class BarangListFragment : Fragment() {
     private val allBarangList = mutableListOf<BarangWithVarian>()
     private val displayList = mutableListOf<BarangWithVarian>()
 
+    // Track updatedAt for consistent sorting after async varian loading
+    private val barangSortMap = mutableMapOf<String, Long>()
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -105,10 +108,14 @@ class BarangListFragment : Fragment() {
 
     private fun applyFilter() {
         val query = binding.etSearch.text.toString().trim()
+        
+        // Sorting berdasarkan timestamp updated_at secara Descending
+        val sortedAll = allBarangList.sortedByDescending { barangSortMap[it.barang.id] ?: 0L }
+
         val filtered = if (query.isEmpty()) {
-            allBarangList
+            sortedAll
         } else {
-            allBarangList.filter { item ->
+            sortedAll.filter { item ->
                 item.barang.namaBarang.contains(query, ignoreCase = true) ||
                 item.varianList.any { it.kemasanNama.contains(query, ignoreCase = true) }
             }
@@ -126,7 +133,7 @@ class BarangListFragment : Fragment() {
 
         barangListener?.remove()
         barangListener = db.collection("master_barang")
-            .orderBy("created_at", Query.Direction.DESCENDING)
+            .orderBy("updated_at", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
                     showLoading(false)
@@ -136,6 +143,7 @@ class BarangListFragment : Fragment() {
                 }
 
                 allBarangList.clear()
+                barangSortMap.clear()
                 val loadedBarang = snapshots?.documents?.size ?: 0
                 var processedBarang = 0
 
@@ -147,8 +155,12 @@ class BarangListFragment : Fragment() {
                 }
 
                 snapshots?.documents?.forEach { doc ->
+                    val barangId = doc.id
+                    val updatedAt = doc.getLong("updated_at") ?: 0L
+                    barangSortMap[barangId] = updatedAt
+
                     val barang = Barang(
-                        id = doc.id,
+                        id = barangId,
                         namaBarang = doc.getString("nama_barang") ?: ""
                     )
 
@@ -275,13 +287,16 @@ class BarangListFragment : Fragment() {
                                         StokDetailItem(
                                             mandorName = mandorName,
                                             tanggal = tanggalStr,
-                                            jumlah = jumlah
+                                            jumlah = jumlah,
+                                            timestamp = tanggal
                                         )
                                     )
                                     processedItems++
 
                                     if (processedItems == totalItems) {
                                         progressBar.visibility = View.GONE
+                                        // Urutkan detail stok berdasarkan tanggal terbaru
+                                        detailList.sortByDescending { it.timestamp } 
                                         detailAdapter.notifyDataSetChanged()
                                         if (detailList.isEmpty()) {
                                             tvEmpty.visibility = View.VISIBLE
@@ -340,7 +355,7 @@ class BarangListFragment : Fragment() {
                 Toast.makeText(requireContext(), "Barang berhasil dihapus", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener { e ->
-                showLoading(true)
+                showLoading(false)
                 Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
             }
     }
@@ -362,6 +377,7 @@ class BarangListFragment : Fragment() {
     data class StokDetailItem(
         val mandorName: String,
         val tanggal: String,
-        val jumlah: Int
+        val jumlah: Int,
+        val timestamp: Long
     )
 }

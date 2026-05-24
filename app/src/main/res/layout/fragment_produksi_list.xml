@@ -22,7 +22,6 @@
 
     </com.google.android.material.appbar.AppBarLayout>
 
-    <!-- FILTER SECTION (Optional Search) -->
     <LinearLayout
         android:id="@+id/filterContainer"
         android:layout_width="match_parent"
@@ -39,7 +38,7 @@
             style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Cari mandor..."
+            android:hint="Cari data..."
             app:startIconDrawable="@drawable/ic_search"
             app:startIconTint="#E59BA6"
             app:boxStrokeColor="#E59BA6"
@@ -64,73 +63,48 @@
         app:layout_constraintTop_toBottomOf="@id/filterContainer"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <HorizontalScrollView
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:fillViewport="true">
+            android:orientation="vertical">
 
+            <!-- SIMPLIFIED TABLE HEADER -->
             <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:orientation="vertical">
+                android:id="@+id/headerTable"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:background="#F5F5F5">
 
-                <!-- TABLE HEADER -->
-                <LinearLayout
-                    android:id="@+id/headerTable"
-                    android:layout_width="wrap_content"
+                <TextView
+                    android:id="@+id/tvHeaderTanggal"
+                    android:layout_width="0dp"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:padding="12dp"
-                    android:background="#F5F5F5">
+                    android:layout_weight="1"
+                    android:text="Tanggal Produksi ↓"
+                    android:textStyle="bold"
+                    android:textSize="13sp"
+                    android:textColor="#212121" />
 
-                    <TextView
-                        android:id="@+id/tvHeaderTanggal"
-                        android:layout_width="120dp"
-                        android:layout_height="wrap_content"
-                        android:text="Tanggal ↓"
-                        android:textStyle="bold"
-                        android:textSize="13sp"
-                        android:textColor="#212121"
-                        android:clickable="true"
-                        android:focusable="true"
-                        android:background="?attr/selectableItemBackground"/>
-
-                    <TextView
-                        android:layout_width="150dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginHorizontal="8dp"
-                        android:text="Mandor"
-                        android:textStyle="bold"
-                        android:textSize="13sp"
-                        android:textColor="#212121" />
-
-                    <TextView
-                        android:layout_width="200dp"
-                        android:layout_height="wrap_content"
-                        android:text="Item Produksi"
-                        android:textStyle="bold"
-                        android:textSize="13sp"
-                        android:textColor="#212121" />
-
-                    <TextView
-                        android:layout_width="80dp"
-                        android:layout_height="wrap_content"
-                        android:text="Aksi"
-                        android:gravity="center"
-                        android:textStyle="bold"
-                        android:textSize="13sp"
-                        android:textColor="#212121" />
-                </LinearLayout>
-
-                <androidx.recyclerview.widget.RecyclerView
-                    android:id="@+id/rvProduksi"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:paddingVertical="4dp"
-                    android:clipToPadding="false" />
-
+                <TextView
+                    android:layout_width="80dp"
+                    android:layout_height="wrap_content"
+                    android:text="Aksi"
+                    android:gravity="center"
+                    android:textStyle="bold"
+                    android:textSize="13sp"
+                    android:textColor="#212121" />
             </LinearLayout>
-        </HorizontalScrollView>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvProduksi"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingVertical="4dp"
+                android:clipToPadding="false" />
+
+        </LinearLayout>
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 

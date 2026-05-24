@@ -13,7 +13,6 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
@@ -54,9 +53,6 @@ class ProduksiListFragment : Fragment() {
     private val userRole: String get() = arguments?.getString(ARG_USER_ROLE) ?: "mandor"
     private val currentUserId: String get() = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-    private var currentSortColumn = "tanggal" // "tanggal"
-    private var isAscending = false
-
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -86,35 +82,45 @@ class ProduksiListFragment : Fragment() {
     }
 
     private fun setupRoleUI() {
+        // Hanya mandor yang bisa menambah data produksi
         binding.fabAdd.visibility =
             if (userRole == "mandor") View.VISIBLE
             else View.GONE
-        
-        // Sembunyikan kolom mandor di header jika user adalah mandor
-        if (userRole == "mandor") {
-            val tvHeaderMandor = binding.headerTable.getChildAt(1) as? TextView
-            tvHeaderMandor?.visibility = View.GONE
-            binding.tilSearch.hint = "Cari item produksi..."
-        }
     }
 
     private fun setupRecyclerView() {
-        adapter = ProduksiAdapter(
-            displayList,
-            userRole,
-            onEditClick = { item ->
-                val intent = Intent(requireContext(), ProduksiFormActivity::class.java)
-                intent.putExtra("PRODUKSI_ID", item.produksi.id)
-                intent.putExtra("USER_ROLE", userRole)
-                startActivity(intent)
-            },
-            onDeleteClick = { item ->
-                showDeleteConfirmation(item)
-            }
-        )
+        adapter = ProduksiAdapter(displayList) { item ->
+            showDetailDialog(item)
+        }
 
         binding.rvProduksi.layoutManager = LinearLayoutManager(requireContext())
         binding.rvProduksi.adapter = adapter
+    }
+
+    private fun showDetailDialog(item: ProduksiWithItems) {
+        val produksi = item.produksi
+        val items = item.items
+        
+        val dateFormat = SimpleDateFormat("dd MMMM yyyy HH:mm", Locale("id", "ID"))
+        
+        val detailMessage = StringBuilder()
+        detailMessage.append("Mandor: ${produksi.mandorName}\n")
+        detailMessage.append("Tanggal: ${dateFormat.format(Date(produksi.tanggalProduksi))}\n\n")
+        detailMessage.append("Item Produksi:\n")
+        
+        if (items.isEmpty()) {
+            detailMessage.append("- Tidak ada item")
+        } else {
+            items.forEach { pItem ->
+                detailMessage.append("- ${pItem.barangNama} (${pItem.kemasanNama}): ${pItem.jumlahProduksi} ${pItem.kemasanSatuan}\n")
+            }
+        }
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Detail Produksi")
+            .setMessage(detailMessage.toString())
+            .setPositiveButton("Tutup", null)
+            .show()
     }
 
     private fun setupListeners() {
@@ -133,24 +139,6 @@ class ProduksiListFragment : Fragment() {
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) { applyFilter() }
         })
-
-        binding.tvHeaderTanggal.setOnClickListener { toggleSort("tanggal") }
-    }
-
-    private fun toggleSort(column: String) {
-        if (currentSortColumn == column) {
-            isAscending = !isAscending
-        } else {
-            currentSortColumn = column
-            isAscending = true
-        }
-        updateSortHeaders()
-        applyFilter()
-    }
-
-    private fun updateSortHeaders() {
-        val arrow = if (isAscending) " ↑" else " ↓"
-        binding.tvHeaderTanggal.text = "Tanggal" + (if (currentSortColumn == "tanggal") arrow else "")
     }
 
     private fun loadProduksiData() {
@@ -224,20 +212,11 @@ class ProduksiListFragment : Fragment() {
     private fun applyFilter() {
         val query = binding.etSearch.text.toString().trim()
 
-        var filtered = allProduksiList.filter { item ->
-            val matchSearch = query.isEmpty() ||
+        val filtered = allProduksiList.filter { item ->
+            query.isEmpty() ||
                 item.produksi.mandorName.contains(query, ignoreCase = true) ||
                 item.items.any { it.barangNama.contains(query, ignoreCase = true) }
-            matchSearch
-        }
-
-        filtered = when (currentSortColumn) {
-            "tanggal" -> {
-                if (isAscending) filtered.sortedBy { it.produksi.tanggalProduksi }
-                else filtered.sortedByDescending { it.produksi.tanggalProduksi }
-            }
-            else -> filtered
-        }
+        }.sortedByDescending { it.produksi.tanggalProduksi }
 
         displayList.clear()
         displayList.addAll(filtered)
@@ -321,41 +300,6 @@ class ProduksiListFragment : Fragment() {
                 completed++
                 if (completed == 2) callback(barangNama, kemasanNama, kemasanSatuan)
             }
-    }
-
-    private fun showDeleteConfirmation(item: ProduksiWithItems) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Hapus Produksi")
-            .setMessage("Apakah Anda yakin ingin menghapus data produksi ini?")
-            .setPositiveButton("Hapus") { _, _ ->
-                deleteProduksi(item)
-            }
-            .setNegativeButton("Batal", null)
-            .show()
-    }
-
-    private fun deleteProduksi(item: ProduksiWithItems) {
-        showLoading(true)
-        val batch = db.batch()
-
-        // 1. Kembalikan stok di master_kemasan (jika ada logika itu, tapi biasanya produksi hanya menambah stok barang_varian)
-        // 2. Kurangi stok di barang_varian yang sudah diproduksi
-        item.items.forEach { pItem ->
-            val varianRef = db.collection("barang_varian").document(pItem.varianId)
-            batch.update(varianRef, "stok", FieldValue.increment(-pItem.jumlahProduksi.toLong()))
-            batch.delete(db.collection("produksi_items").document(pItem.id))
-        }
-
-        // 3. Hapus data produksi utama
-        batch.delete(db.collection("produksi").document(item.produksi.id))
-
-        batch.commit().addOnSuccessListener {
-            showLoading(false)
-            Toast.makeText(requireContext(), "Data produksi berhasil dihapus", Toast.LENGTH_SHORT).show()
-        }.addOnFailureListener { e ->
-            showLoading(false)
-            Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-        }
     }
 
     private fun updateEmptyState() {

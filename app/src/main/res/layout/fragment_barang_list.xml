@@ -91,10 +91,27 @@
                         android:textColor="#212121" />
 
                     <TextView
-                        android:layout_width="250dp"
+                        android:layout_width="120dp"
                         android:layout_height="wrap_content"
                         android:layout_marginHorizontal="8dp"
-                        android:text="Varian (Stok | Harga)"
+                        android:text="Varian"
+                        android:textStyle="bold"
+                        android:textSize="13sp"
+                        android:textColor="#212121" />
+
+                    <TextView
+                        android:layout_width="80dp"
+                        android:layout_height="wrap_content"
+                        android:text="Stok"
+                        android:textStyle="bold"
+                        android:textSize="13sp"
+                        android:textColor="#212121" />
+
+                    <TextView
+                        android:layout_width="120dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginHorizontal="8dp"
+                        android:text="Harga"
                         android:textStyle="bold"
                         android:textSize="13sp"
                         android:textColor="#212121" />
