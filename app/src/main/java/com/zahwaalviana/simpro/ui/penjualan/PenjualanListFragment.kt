@@ -22,15 +22,14 @@ import com.zahwaalviana.simpro.data.model.PenjualanWithItems
 import com.zahwaalviana.simpro.databinding.FragmentPenjualanListBinding
 import com.zahwaalviana.simpro.ui.penjualan.adapter.PenjualanAdapter
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 class PenjualanListFragment : Fragment() {
 
     private var _binding: FragmentPenjualanListBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var db: FirebaseFirestore
+    private lateinit var db = FirebaseFirestore.getInstance()
     private lateinit var adapter: PenjualanAdapter
     private var penjualanListener: ListenerRegistration? = null
 
@@ -55,8 +54,7 @@ class PenjualanListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        db = FirebaseFirestore.getInstance()
-
+        
         binding.appBarLayout.visibility = View.GONE
         setupRecyclerView()
         setupListeners()
@@ -99,16 +97,11 @@ class PenjualanListFragment : Fragment() {
             binding.etStartDate.setText("")
             binding.etEndDate.setText("")
             binding.btnResetDate.visibility = View.GONE
-            applyFilter()
+            loadPenjualanData()
         }
 
-        binding.tvHeaderTanggal.setOnClickListener {
-            toggleSort("tanggal")
-        }
-
-        binding.tvHeaderTotal.setOnClickListener {
-            toggleSort("total")
-        }
+        binding.tvHeaderTanggal.setOnClickListener { toggleSort("tanggal") }
+        binding.tvHeaderTotal.setOnClickListener { toggleSort("total") }
     }
 
     private fun toggleSort(column: String) {
@@ -131,20 +124,34 @@ class PenjualanListFragment : Fragment() {
     private fun showDateRangePicker() {
         val picker = MaterialDatePicker.Builder.dateRangePicker()
             .setTitleText("Pilih Rentang Tanggal")
-            .apply {
-                if (startDateMs != null && endDateMs != null) {
-                    setSelection(androidx.core.util.Pair(startDateMs, endDateMs))
-                }
-            }
             .build()
 
         picker.addOnPositiveButtonClickListener { selection ->
-            startDateMs = selection.first
-            endDateMs = (selection.second ?: selection.first) + 86_399_999L
-            binding.etStartDate.setText(dateDisplayFormat.format(startDateMs!!))
-            binding.etEndDate.setText(dateDisplayFormat.format(endDateMs!! - 86_399_999L))
+            val utcStart = selection.first ?: return@addOnPositiveButtonClickListener
+            val utcEnd = selection.second ?: utcStart
+            
+            // MaterialDatePicker mengembalikan waktu dalam UTC midnight.
+            // Kita konversi ke Local Time midnight agar filter "hari itu saja" akurat di waktu lokal.
+            val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+            
+            cal.timeInMillis = utcStart
+            val localStart = Calendar.getInstance()
+            localStart.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 0, 0, 0)
+            localStart.set(Calendar.MILLISECOND, 0)
+            startDateMs = localStart.timeInMillis
+            
+            cal.timeInMillis = utcEnd
+            val localEnd = Calendar.getInstance()
+            localEnd.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 23, 59, 59)
+            localEnd.set(Calendar.MILLISECOND, 999)
+            endDateMs = localEnd.timeInMillis
+
+            binding.etStartDate.setText(dateDisplayFormat.format(Date(startDateMs!!)))
+            binding.etEndDate.setText(dateDisplayFormat.format(Date(endDateMs!!)))
             binding.btnResetDate.visibility = View.VISIBLE
-            applyFilter()
+            
+            // Langsung ambil data dari Firestore berdasarkan filter tanggal baru
+            loadPenjualanData()
         }
 
         picker.show(parentFragmentManager, "date_range_picker")
@@ -154,8 +161,17 @@ class PenjualanListFragment : Fragment() {
         showLoading(true)
 
         penjualanListener?.remove()
-        penjualanListener = db.collection("penjualan")
-            .orderBy("tanggal", Query.Direction.DESCENDING)
+        
+        var query: Query = db.collection("penjualan")
+        
+        // Filter di sisi database agar lebih efisien (get data hari itu saja)
+        if (startDateMs != null && endDateMs != null) {
+            query = query.whereGreaterThanOrEqualTo("tanggal", startDateMs!!)
+                         .whereLessThanOrEqualTo("tanggal", endDateMs!!)
+        }
+        
+        // Urutkan DESCENDING agar data terbaru di atas
+        penjualanListener = query.orderBy("tanggal", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
                     showLoading(false)
@@ -205,14 +221,10 @@ class PenjualanListFragment : Fragment() {
         var filtered = allPenjualanList.filter { item ->
             val matchSearch = query.isEmpty() ||
                 item.items.any { it.barangNama.contains(query, ignoreCase = true) }
-
-            val matchDate = startDateMs == null || endDateMs == null ||
-                item.penjualan.tanggal in startDateMs!!..endDateMs!!
-
-            matchSearch && matchDate
+            matchSearch
         }
 
-        // Apply Sorting: diurutkan secara Descending (terbaru di atas) secara default
+        // Apply Sorting (Urutan terbaru di atas secara default)
         filtered = when (currentSortColumn) {
             "tanggal" -> {
                 if (isAscending) filtered.sortedBy { it.penjualan.tanggal }

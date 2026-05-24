@@ -16,6 +16,11 @@
             android:icon="@drawable/ic_inventory" />
 
         <item
+            android:id="@+id/nav_varian"
+            android:title="Data Varian &amp; Stok"
+            android:icon="@drawable/ic_label" />
+
+        <item
             android:id="@+id/nav_kemasan"
             android:title="Data Kemasan"
             android:icon="@drawable/ic_label" />

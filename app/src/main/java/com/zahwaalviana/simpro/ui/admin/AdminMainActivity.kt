@@ -25,6 +25,7 @@ import com.zahwaalviana.simpro.ui.penjualan.PenjualanFormActivity
 import com.zahwaalviana.simpro.ui.penjualan.PenjualanListFragment
 import com.zahwaalviana.simpro.ui.produksi.ProduksiListFragment
 import com.zahwaalviana.simpro.ui.user.UserListFragment
+import com.zahwaalviana.simpro.ui.varian.VarianListFragment
 
 class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -103,6 +104,13 @@ class AdminMainActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
                 supportActionBar?.title = "Master Barang"
                 supportFragmentManager.beginTransaction()
                     .replace(R.id.container_admin, BarangListFragment())
+                    .commit()
+            }
+            
+            R.id.nav_varian -> {
+                supportActionBar?.title = "Data Varian & Stok"
+                supportFragmentManager.beginTransaction()
+                    .replace(R.id.container_admin, VarianListFragment())
                     .commit()
             }
 

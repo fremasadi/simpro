@@ -8,26 +8,17 @@ import android.text.TextWatcher
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.ProgressBar
-import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
-import com.zahwaalviana.simpro.R
 import com.zahwaalviana.simpro.data.model.Barang
-import com.zahwaalviana.simpro.data.model.BarangVarian
 import com.zahwaalviana.simpro.data.model.BarangWithVarian
 import com.zahwaalviana.simpro.databinding.FragmentBarangListBinding
 import com.zahwaalviana.simpro.ui.barang.adapter.BarangAdapter
-import com.zahwaalviana.simpro.ui.barang.adapter.StokDetailAdapter
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
 
 class BarangListFragment : Fragment() {
 
@@ -40,8 +31,6 @@ class BarangListFragment : Fragment() {
     
     private val allBarangList = mutableListOf<BarangWithVarian>()
     private val displayList = mutableListOf<BarangWithVarian>()
-
-    // Track updatedAt for consistent sorting after async varian loading
     private val barangSortMap = mutableMapOf<String, Long>()
 
     override fun onCreateView(
@@ -55,7 +44,6 @@ class BarangListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-
         db = FirebaseFirestore.getInstance()
 
         setupToolbar()
@@ -78,9 +66,6 @@ class BarangListFragment : Fragment() {
             },
             onDeleteClick = { barangWithVarian ->
                 showDeleteConfirmation(barangWithVarian)
-            },
-            onVarianClick = { varian, barangNama ->
-                showStokDetailDialog(varian, barangNama)
             }
         )
 
@@ -108,16 +93,13 @@ class BarangListFragment : Fragment() {
 
     private fun applyFilter() {
         val query = binding.etSearch.text.toString().trim()
-        
-        // Sorting berdasarkan timestamp updated_at secara Descending
         val sortedAll = allBarangList.sortedByDescending { barangSortMap[it.barang.id] ?: 0L }
 
         val filtered = if (query.isEmpty()) {
             sortedAll
         } else {
             sortedAll.filter { item ->
-                item.barang.namaBarang.contains(query, ignoreCase = true) ||
-                item.varianList.any { it.kemasanNama.contains(query, ignoreCase = true) }
+                item.barang.namaBarang.contains(query, ignoreCase = true)
             }
         }
 
@@ -135,25 +117,17 @@ class BarangListFragment : Fragment() {
         barangListener = db.collection("master_barang")
             .orderBy("updated_at", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, error ->
+                showLoading(false)
+                binding.swipeRefresh.isRefreshing = false
+
                 if (error != null) {
-                    showLoading(false)
-                    binding.swipeRefresh.isRefreshing = false
                     Toast.makeText(requireContext(), "Error: ${error.message}", Toast.LENGTH_SHORT).show()
                     return@addSnapshotListener
                 }
 
                 allBarangList.clear()
                 barangSortMap.clear()
-                val loadedBarang = snapshots?.documents?.size ?: 0
-                var processedBarang = 0
-
-                if (loadedBarang == 0) {
-                    showLoading(false)
-                    binding.swipeRefresh.isRefreshing = false
-                    applyFilter()
-                    return@addSnapshotListener
-                }
-
+                
                 snapshots?.documents?.forEach { doc ->
                     val barangId = doc.id
                     val updatedAt = doc.getLong("updated_at") ?: 0L
@@ -163,193 +137,27 @@ class BarangListFragment : Fragment() {
                         id = barangId,
                         namaBarang = doc.getString("nama_barang") ?: ""
                     )
-
-                    loadVarianForBarang(barang) { varianList ->
-                        allBarangList.add(BarangWithVarian(barang, varianList))
-                        processedBarang++
-
-                        if (processedBarang == loadedBarang) {
-                            showLoading(false)
-                            binding.swipeRefresh.isRefreshing = false
-                            applyFilter()
-                        }
-                    }
+                    // We only need the barang object now, variant list can be empty
+                    allBarangList.add(BarangWithVarian(barang, emptyList()))
                 }
-            }
-    }
-
-    private fun loadVarianForBarang(barang: Barang, callback: (List<BarangVarian>) -> Unit) {
-        db.collection("barang_varian")
-            .whereEqualTo("barang_id", barang.id)
-            .get()
-            .addOnSuccessListener { varianDocs ->
-                val varianList = mutableListOf<BarangVarian>()
-                val totalVarian = varianDocs.size()
-                var processedVarian = 0
-
-                if (totalVarian == 0) {
-                    callback(emptyList())
-                    return@addOnSuccessListener
-                }
-
-                varianDocs.documents.forEach { varianDoc ->
-                    val kemasanId = varianDoc.getString("kemasan_id") ?: ""
-
-                    db.collection("master_kemasan")
-                        .document(kemasanId)
-                        .get()
-                        .addOnSuccessListener { kemasanDoc ->
-                            val varian = BarangVarian(
-                                id = varianDoc.id,
-                                barangId = varianDoc.getString("barang_id") ?: "",
-                                kemasanId = kemasanId,
-                                kemasanNama = kemasanDoc.getString("nama_kemasan") ?: "",
-                                kemasanSatuan = kemasanDoc.getString("satuan") ?: "",
-                                shelfLifeHari = varianDoc.getLong("shelf_life_hari")?.toInt() ?: 0,
-                                hargaJual = varianDoc.getLong("harga_jual")?.toInt() ?: 0,
-                                stok = varianDoc.getLong("stok")?.toInt() ?: 0
-                            )
-                            varianList.add(varian)
-                            processedVarian++
-
-                            if (processedVarian == totalVarian) {
-                                callback(varianList)
-                            }
-                        }
-                        .addOnFailureListener {
-                            processedVarian++
-                            if (processedVarian == totalVarian) {
-                                callback(varianList)
-                            }
-                        }
-                }
-            }
-            .addOnFailureListener {
-                callback(emptyList())
-            }
-    }
-
-    @SuppressLint("SetTextI18n", "NotifyDataSetChanged")
-    private fun showStokDetailDialog(varian: BarangVarian, barangNama: String) {
-        val dialogView = LayoutInflater.from(requireContext())
-            .inflate(R.layout.dialog_stok_detail, null)
-
-        val tvTotalStok = dialogView.findViewById<TextView>(R.id.tvTotalStok)
-        val tvEmpty = dialogView.findViewById<TextView>(R.id.tvEmpty)
-        val progressBar = dialogView.findViewById<ProgressBar>(R.id.progressBar)
-        val rvStokDetail = dialogView.findViewById<RecyclerView>(R.id.rvStokDetail)
-
-        tvTotalStok.text = "Total Stok: ${varian.stok} ${varian.kemasanSatuan}"
-
-        val detailList = mutableListOf<StokDetailItem>()
-        val detailAdapter = StokDetailAdapter(detailList)
-        rvStokDetail.layoutManager = LinearLayoutManager(requireContext())
-        rvStokDetail.adapter = detailAdapter
-
-        val dialog = AlertDialog.Builder(requireContext())
-            .setTitle("$barangNama - ${varian.kemasanNama}")
-            .setView(dialogView)
-            .setPositiveButton("Tutup", null)
-            .show()
-
-        progressBar.visibility = View.VISIBLE
-        db.collection("produksi_items")
-            .whereEqualTo("varian_id", varian.id)
-            .get()
-            .addOnSuccessListener { itemDocs ->
-                if (itemDocs.isEmpty) {
-                    progressBar.visibility = View.GONE
-                    tvEmpty.visibility = View.VISIBLE
-                    return@addOnSuccessListener
-                }
-
-                val totalItems = itemDocs.size()
-                var processedItems = 0
-
-                itemDocs.documents.forEach { itemDoc ->
-                    val produksiId = itemDoc.getString("produksi_id") ?: ""
-                    val jumlah = itemDoc.getLong("jumlah_produksi")?.toInt() ?: 0
-
-                    db.collection("produksi").document(produksiId)
-                        .get()
-                        .addOnSuccessListener { produksiDoc ->
-                            val tanggal = produksiDoc.getLong("tanggal_produksi") ?: 0L
-                            val mandorId = produksiDoc.getString("mandor_id") ?: ""
-
-                            db.collection("users").document(mandorId)
-                                .get()
-                                .addOnSuccessListener { mandorDoc ->
-                                    val mandorName = mandorDoc.getString("name") ?: "Unknown"
-                                    val dateFormat = SimpleDateFormat("dd MMMM yyyy", Locale("id", "ID"))
-                                    val tanggalStr = dateFormat.format(Date(tanggal))
-
-                                    detailList.add(
-                                        StokDetailItem(
-                                            mandorName = mandorName,
-                                            tanggal = tanggalStr,
-                                            jumlah = jumlah,
-                                            timestamp = tanggal
-                                        )
-                                    )
-                                    processedItems++
-
-                                    if (processedItems == totalItems) {
-                                        progressBar.visibility = View.GONE
-                                        // Urutkan detail stok berdasarkan tanggal terbaru
-                                        detailList.sortByDescending { it.timestamp } 
-                                        detailAdapter.notifyDataSetChanged()
-                                        if (detailList.isEmpty()) {
-                                            tvEmpty.visibility = View.VISIBLE
-                                        }
-                                    }
-                                }
-                                .addOnFailureListener {
-                                    processedItems++
-                                    if (processedItems == totalItems) {
-                                        progressBar.visibility = View.GONE
-                                        detailAdapter.notifyDataSetChanged()
-                                    }
-                                }
-                        }
-                        .addOnFailureListener {
-                            processedItems++
-                            if (processedItems == totalItems) {
-                                progressBar.visibility = View.GONE
-                                detailAdapter.notifyDataSetChanged()
-                            }
-                        }
-                }
-            }
-            .addOnFailureListener {
-                progressBar.visibility = View.GONE
-                tvEmpty.visibility = View.VISIBLE
+                applyFilter()
             }
     }
 
     private fun showDeleteConfirmation(barangWithVarian: BarangWithVarian) {
         AlertDialog.Builder(requireContext())
             .setTitle("Hapus Barang")
-            .setMessage("Apakah Anda yakin ingin menghapus barang \"${barangWithVarian.barang.namaBarang}\"? Semua varian dan stok terkait juga akan terhapus.")
+            .setMessage("Apakah Anda yakin ingin menghapus barang \"${barangWithVarian.barang.namaBarang}\"?")
             .setPositiveButton("Hapus") { _, _ ->
-                deleteBarang(barangWithVarian)
+                deleteBarang(barangWithVarian.barang.id)
             }
             .setNegativeButton("Batal", null)
             .show()
     }
 
-    private fun deleteBarang(barangWithVarian: BarangWithVarian) {
+    private fun deleteBarang(id: String) {
         showLoading(true)
-        val batch = db.batch()
-
-        // 1. Delete all varian for this barang
-        barangWithVarian.varianList.forEach { varian ->
-            batch.delete(db.collection("barang_varian").document(varian.id))
-        }
-
-        // 2. Delete the barang itself
-        batch.delete(db.collection("master_barang").document(barangWithVarian.barang.id))
-
-        batch.commit()
+        db.collection("master_barang").document(id).delete()
             .addOnSuccessListener {
                 showLoading(false)
                 Toast.makeText(requireContext(), "Barang berhasil dihapus", Toast.LENGTH_SHORT).show()
@@ -373,11 +181,4 @@ class BarangListFragment : Fragment() {
         barangListener?.remove()
         _binding = null
     }
-
-    data class StokDetailItem(
-        val mandorName: String,
-        val tanggal: String,
-        val jumlah: Int,
-        val timestamp: Long
-    )
 }
