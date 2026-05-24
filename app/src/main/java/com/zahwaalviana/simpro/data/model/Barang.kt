@@ -21,3 +21,10 @@ data class BarangWithVarian(
     val barang: Barang,
     val varianList: List<BarangVarian>
 )
+
+data class StokDetailItem(
+    val mandorName: String,
+    val tanggal: String,
+    val jumlah: Int,
+    val timestamp: Long = 0L
+)

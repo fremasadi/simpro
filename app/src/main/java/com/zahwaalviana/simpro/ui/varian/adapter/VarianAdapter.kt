@@ -9,7 +9,8 @@ import java.text.NumberFormat
 import java.util.Locale
 
 class VarianAdapter(
-    private var varianList: List<Pair<String, BarangVarian>> // Pair of BarangNama and Varian
+    private var varianList: List<Pair<String, BarangVarian>>,
+    private val onItemClick: (String, BarangVarian) -> Unit
 ) : RecyclerView.Adapter<VarianAdapter.VarianViewHolder>() {
 
     private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
@@ -23,6 +24,8 @@ class VarianAdapter(
                 tvNamaVarian.text = "${varian.kemasanNama} (${varian.kemasanSatuan})"
                 tvStok.text = varian.stok.toString()
                 tvHarga.text = currencyFormat.format(varian.hargaJual)
+                
+                root.setOnClickListener { onItemClick(barangNama, varian) }
             }
         }
     }
@@ -38,9 +41,4 @@ class VarianAdapter(
     }
 
     override fun getItemCount(): Int = varianList.size
-
-    fun updateData(newList: List<Pair<String, BarangVarian>>) {
-        varianList = newList
-        notifyDataSetChanged()
-    }
 }
