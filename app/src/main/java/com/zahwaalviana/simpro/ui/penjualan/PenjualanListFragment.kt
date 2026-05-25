@@ -29,7 +29,7 @@ class PenjualanListFragment : Fragment() {
     private var _binding: FragmentPenjualanListBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var db = FirebaseFirestore.getInstance()
+    private val db = FirebaseFirestore.getInstance()
     private lateinit var adapter: PenjualanAdapter
     private var penjualanListener: ListenerRegistration? = null
 
@@ -182,10 +182,9 @@ class PenjualanListFragment : Fragment() {
 
                 allPenjualanList.clear()
                 val docs = snapshots?.documents ?: emptyList()
-                val totalDocs = docs.size
                 var processedDocs = 0
 
-                if (totalDocs == 0) {
+                if (docs.isEmpty()) {
                     showLoading(false)
                     binding.swipeRefresh.isRefreshing = false
                     applyFilter()
@@ -205,7 +204,7 @@ class PenjualanListFragment : Fragment() {
                         allPenjualanList.add(PenjualanWithItems(penjualan, items))
                         processedDocs++
 
-                        if (processedDocs == totalDocs) {
+                        if (processedDocs == docs.size) {
                             showLoading(false)
                             binding.swipeRefresh.isRefreshing = false
                             applyFilter()
@@ -249,10 +248,9 @@ class PenjualanListFragment : Fragment() {
             .get()
             .addOnSuccessListener { itemDocs ->
                 val items = mutableListOf<PenjualanItem>()
-                val totalItems = itemDocs.size()
                 var processedItems = 0
 
-                if (totalItems == 0) {
+                if (itemDocs.isEmpty) {
                     callback(emptyList())
                     return@addOnSuccessListener
                 }
@@ -280,12 +278,12 @@ class PenjualanListFragment : Fragment() {
                                 items.add(item)
                                 processedItems++
 
-                                if (processedItems == totalItems) callback(items)
+                                if (processedItems == itemDocs.size()) callback(items)
                             }
                         }
                         .addOnFailureListener {
                             processedItems++
-                            if (processedItems == totalItems) callback(items)
+                            if (processedItems == itemDocs.size()) callback(items)
                         }
                 }
             }
