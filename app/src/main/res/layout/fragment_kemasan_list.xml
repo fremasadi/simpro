@@ -124,12 +124,62 @@
                     android:layout_width="match_parent"
                     android:layout_height="match_parent"
                     android:paddingVertical="4dp"
-                    android:clipToPadding="false" />
+                    android:clipToPadding="false"
+                    android:paddingBottom="80dp" />
 
             </LinearLayout>
         </HorizontalScrollView>
 
     </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <!-- FLOATING PAGINATION -->
+    <com.google.android.material.card.MaterialCardView
+        android:id="@+id/cardPagination"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="24dp"
+        app:cardCornerRadius="25dp"
+        app:cardElevation="8dp"
+        app:strokeWidth="1dp"
+        app:strokeColor="#E59BA6"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:padding="4dp">
+
+            <ImageButton
+                android:id="@+id/btnPrevPage"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_media_previous"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="#E59BA6" />
+
+            <TextView
+                android:id="@+id/tvPageInfo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="1 / 1"
+                android:textColor="#212121"
+                android:textStyle="bold"
+                android:paddingHorizontal="16dp" />
+
+            <ImageButton
+                android:id="@+id/btnNextPage"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@android:drawable/ic_media_next"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="#E59BA6" />
+
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
 
     <ProgressBar
         android:id="@+id/progressBar"

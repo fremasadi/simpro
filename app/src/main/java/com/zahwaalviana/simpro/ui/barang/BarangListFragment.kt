@@ -28,6 +28,7 @@ import com.zahwaalviana.simpro.ui.barang.adapter.StokDetailAdapter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.ceil
 
 class BarangListFragment : Fragment() {
 
@@ -40,6 +41,10 @@ class BarangListFragment : Fragment() {
     
     private val allBarangList = mutableListOf<BarangWithVarian>()
     private val displayList = mutableListOf<BarangWithVarian>()
+
+    // Pagination variables
+    private var currentPage = 1
+    private val pageSize = 10
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -98,14 +103,40 @@ class BarangListFragment : Fragment() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
+                currentPage = 1
                 applyFilter()
             }
         })
+
+        // Pagination buttons
+        binding.btnPrevPage.setOnClickListener {
+            if (currentPage > 1) {
+                currentPage--
+                applyFilter()
+            }
+        }
+
+        binding.btnNextPage.setOnClickListener {
+            val query = binding.etSearch.text.toString().trim()
+            val filteredCount = if (query.isEmpty()) {
+                allBarangList.size
+            } else {
+                allBarangList.count { item ->
+                    item.barang.namaBarang.contains(query, ignoreCase = true) ||
+                    item.varianList.any { it.kemasanNama.contains(query, ignoreCase = true) }
+                }
+            }
+            val totalPage = ceil(filteredCount.toDouble() / pageSize).toInt()
+            if (currentPage < totalPage) {
+                currentPage++
+                applyFilter()
+            }
+        }
     }
 
     private fun applyFilter() {
         val query = binding.etSearch.text.toString().trim()
-        val filtered = if (query.isEmpty()) {
+        val filteredList = if (query.isEmpty()) {
             allBarangList
         } else {
             allBarangList.filter { item ->
@@ -114,10 +145,33 @@ class BarangListFragment : Fragment() {
             }
         }
 
+        val totalItems = filteredList.size
+        val totalPage = ceil(totalItems.toDouble() / pageSize).toInt().coerceAtLeast(1)
+
+        if (currentPage > totalPage) currentPage = totalPage
+
+        val startIndex = (currentPage - 1) * pageSize
+        val endIndex = (startIndex + pageSize).coerceAtMost(totalItems)
+
         displayList.clear()
-        displayList.addAll(filtered)
+        if (totalItems > 0) {
+            displayList.addAll(filteredList.subList(startIndex, endIndex))
+        }
+
         adapter.notifyDataSetChanged()
         updateEmptyState()
+        updatePaginationUI(currentPage, totalPage)
+    }
+
+    private fun updatePaginationUI(current: Int, total: Int) {
+        binding.cardPagination.visibility = if (allBarangList.isEmpty() && displayList.isEmpty()) View.GONE else View.VISIBLE
+        binding.tvPageInfo.text = "$current / $total"
+        
+        binding.btnPrevPage.isEnabled = current > 1
+        binding.btnPrevPage.alpha = if (current > 1) 1.0f else 0.3f
+        
+        binding.btnNextPage.isEnabled = current < total
+        binding.btnNextPage.alpha = if (current < total) 1.0f else 0.3f
     }
 
     @SuppressLint("NotifyDataSetChanged")

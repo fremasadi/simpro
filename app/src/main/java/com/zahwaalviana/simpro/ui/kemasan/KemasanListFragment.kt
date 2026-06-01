@@ -18,6 +18,7 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.zahwaalviana.simpro.ui.kemasan.adapter.KemasanAdapter
 import com.zahwaalviana.simpro.databinding.FragmentKemasanListBinding
+import kotlin.math.ceil
 
 
 class KemasanListFragment : Fragment() {
@@ -31,6 +32,10 @@ class KemasanListFragment : Fragment() {
     
     private val allKemasanList = mutableListOf<Kemasan>()
     private val displayList = mutableListOf<Kemasan>()
+
+    // Pagination variables
+    private var currentPage = 1
+    private val pageSize = 10
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -86,14 +91,40 @@ class KemasanListFragment : Fragment() {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
             override fun afterTextChanged(s: Editable?) {
+                currentPage = 1
                 applyFilter()
             }
         })
+
+        // Pagination buttons
+        binding.btnPrevPage.setOnClickListener {
+            if (currentPage > 1) {
+                currentPage--
+                applyFilter()
+            }
+        }
+
+        binding.btnNextPage.setOnClickListener {
+            val query = binding.etSearch.text.toString().trim()
+            val filteredCount = if (query.isEmpty()) {
+                allKemasanList.size
+            } else {
+                allKemasanList.count { item ->
+                    item.namaKemasan.contains(query, ignoreCase = true) ||
+                    item.satuan.contains(query, ignoreCase = true)
+                }
+            }
+            val totalPage = ceil(filteredCount.toDouble() / pageSize).toInt().coerceAtLeast(1)
+            if (currentPage < totalPage) {
+                currentPage++
+                applyFilter()
+            }
+        }
     }
 
     private fun applyFilter() {
         val query = binding.etSearch.text.toString().trim()
-        val filtered = if (query.isEmpty()) {
+        val filteredList = if (query.isEmpty()) {
             allKemasanList
         } else {
             allKemasanList.filter { item ->
@@ -102,10 +133,33 @@ class KemasanListFragment : Fragment() {
             }
         }
 
+        val totalItems = filteredList.size
+        val totalPage = ceil(totalItems.toDouble() / pageSize).toInt().coerceAtLeast(1)
+
+        if (currentPage > totalPage) currentPage = totalPage
+
+        val startIndex = (currentPage - 1) * pageSize
+        val endIndex = (startIndex + pageSize).coerceAtMost(totalItems)
+
         displayList.clear()
-        displayList.addAll(filtered)
+        if (totalItems > 0) {
+            displayList.addAll(filteredList.subList(startIndex, endIndex))
+        }
+
         adapter.notifyDataSetChanged()
         updateEmptyState()
+        updatePaginationUI(currentPage, totalPage)
+    }
+
+    private fun updatePaginationUI(current: Int, total: Int) {
+        binding.cardPagination.visibility = if (allKemasanList.isEmpty() && displayList.isEmpty()) View.GONE else View.VISIBLE
+        binding.tvPageInfo.text = "$current / $total"
+        
+        binding.btnPrevPage.isEnabled = current > 1
+        binding.btnPrevPage.alpha = if (current > 1) 1.0f else 0.3f
+        
+        binding.btnNextPage.isEnabled = current < total
+        binding.btnNextPage.alpha = if (current < total) 1.0f else 0.3f
     }
 
     @SuppressLint("NotifyDataSetChanged")
