@@ -25,6 +25,7 @@ import com.zahwaalviana.simpro.ui.produksi.adapter.ProduksiAdapter
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.ceil
 
 
 class ProduksiListFragment : Fragment() {
@@ -54,7 +55,9 @@ class ProduksiListFragment : Fragment() {
     private val userRole: String get() = arguments?.getString(ARG_USER_ROLE) ?: "mandor"
     private val currentUserId: String get() = FirebaseAuth.getInstance().currentUser?.uid ?: ""
 
-    private var currentSortColumn = "tanggal" // "tanggal"
+    // Pagination & Sorting variables
+    private var currentPage = 1
+    private val pageSize = 10
     private var isAscending = false
 
     override fun onCreateView(
@@ -131,26 +134,44 @@ class ProduksiListFragment : Fragment() {
         binding.etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) { applyFilter() }
+            override fun afterTextChanged(s: Editable?) { 
+                currentPage = 1
+                applyFilter() 
+            }
         })
 
-        binding.tvHeaderTanggal.setOnClickListener { toggleSort("tanggal") }
-    }
-
-    private fun toggleSort(column: String) {
-        if (currentSortColumn == column) {
+        binding.tvHeaderTanggal.setOnClickListener { 
             isAscending = !isAscending
-        } else {
-            currentSortColumn = column
-            isAscending = true
+            updateSortHeaders()
+            applyFilter() 
         }
-        updateSortHeaders()
-        applyFilter()
+
+        // Pagination buttons
+        binding.btnPrevPage.setOnClickListener {
+            if (currentPage > 1) {
+                currentPage--
+                applyFilter()
+            }
+        }
+
+        binding.btnNextPage.setOnClickListener {
+            val query = binding.etSearch.text.toString().trim()
+            val filteredCount = allProduksiList.count { item ->
+                query.isEmpty() ||
+                item.produksi.mandorName.contains(query, ignoreCase = true) ||
+                item.items.any { it.barangNama.contains(query, ignoreCase = true) }
+            }
+            val totalPage = ceil(filteredCount.toDouble() / pageSize).toInt().coerceAtLeast(1)
+            if (currentPage < totalPage) {
+                currentPage++
+                applyFilter()
+            }
+        }
     }
 
     private fun updateSortHeaders() {
         val arrow = if (isAscending) " ↑" else " ↓"
-        binding.tvHeaderTanggal.text = "Tanggal" + (if (currentSortColumn == "tanggal") arrow else "")
+        binding.tvHeaderTanggal.text = "Tanggal $arrow"
     }
 
     private fun loadProduksiData() {
@@ -158,7 +179,7 @@ class ProduksiListFragment : Fragment() {
 
         produksiListener?.remove()
         produksiListener = db.collection("produksi")
-            .orderBy("tanggal_produksi", Query.Direction.DESCENDING)
+            .orderBy("tanggal_produksi", if (isAscending) Query.Direction.ASCENDING else Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
                     showLoading(false)
@@ -225,24 +246,42 @@ class ProduksiListFragment : Fragment() {
         val query = binding.etSearch.text.toString().trim()
 
         var filtered = allProduksiList.filter { item ->
-            val matchSearch = query.isEmpty() ||
-                item.produksi.mandorName.contains(query, ignoreCase = true) ||
-                item.items.any { it.barangNama.contains(query, ignoreCase = true) }
-            matchSearch
+            query.isEmpty() ||
+            item.produksi.mandorName.contains(query, ignoreCase = true) ||
+            item.items.any { it.barangNama.contains(query, ignoreCase = true) }
         }
 
-        filtered = when (currentSortColumn) {
-            "tanggal" -> {
-                if (isAscending) filtered.sortedBy { it.produksi.tanggalProduksi }
-                else filtered.sortedByDescending { it.produksi.tanggalProduksi }
-            }
-            else -> filtered
-        }
+        // Apply sorting based on current state
+        filtered = if (isAscending) filtered.sortedBy { it.produksi.tanggalProduksi }
+        else filtered.sortedByDescending { it.produksi.tanggalProduksi }
+
+        val totalItems = filtered.size
+        val totalPage = ceil(totalItems.toDouble() / pageSize).toInt().coerceAtLeast(1)
+
+        if (currentPage > totalPage) currentPage = totalPage
+
+        val startIndex = (currentPage - 1) * pageSize
+        val endIndex = (startIndex + pageSize).coerceAtMost(totalItems)
 
         displayList.clear()
-        displayList.addAll(filtered)
+        if (totalItems > 0) {
+            displayList.addAll(filtered.subList(startIndex, endIndex))
+        }
+
         adapter.notifyDataSetChanged()
         updateEmptyState()
+        updatePaginationUI(currentPage, totalPage)
+    }
+
+    private fun updatePaginationUI(current: Int, total: Int) {
+        binding.cardPagination.visibility = if (allProduksiList.isEmpty() && displayList.isEmpty()) View.GONE else View.VISIBLE
+        binding.tvPageInfo.text = "$current / $total"
+        
+        binding.btnPrevPage.isEnabled = current > 1
+        binding.btnPrevPage.alpha = if (current > 1) 1.0f else 0.3f
+        
+        binding.btnNextPage.isEnabled = current < total
+        binding.btnNextPage.alpha = if (current < total) 1.0f else 0.3f
     }
 
     private fun loadItemsForProduksi(produksi: Produksi, callback: (List<ProduksiItem>) -> Unit) {
@@ -268,21 +307,20 @@ class ProduksiListFragment : Fragment() {
                             val barangId = varianDoc.getString("barang_id") ?: ""
                             val kemasanId = varianDoc.getString("kemasan_id") ?: ""
 
-                            loadBarangAndKemasan(barangId, kemasanId) { barangNama, kemasanNama, kemasanSatuan ->
+                            loadBarangAndKemasan(barangId, kemasanId) { bNama, kNama, kSatuan ->
                                 val item = ProduksiItem(
                                     id = itemDoc.id,
-                                    produksiId = itemDoc.getString("produksi_id") ?: "",
+                                    produksiId = produksi.id,
                                     varianId = varianId,
-                                    barangNama = barangNama,
-                                    kemasanNama = kemasanNama,
-                                    kemasanSatuan = kemasanSatuan,
+                                    barangNama = bNama,
+                                    kemasanNama = kNama,
+                                    kemasanSatuan = kSatuan,
                                     jumlahProduksi = itemDoc.getLong("jumlah_produksi")?.toInt() ?: 0,
                                     expiredAt = itemDoc.getLong("expired_at") ?: 0L,
                                     shelfLifeHari = varianDoc.getLong("shelf_life_hari")?.toInt() ?: 0
                                 )
                                 items.add(item)
                                 processedItems++
-
                                 if (processedItems == totalItems) callback(items)
                             }
                         }
@@ -300,36 +338,28 @@ class ProduksiListFragment : Fragment() {
         kemasanId: String,
         callback: (String, String, String) -> Unit
     ) {
-        var barangNama = ""
-        var kemasanNama = ""
-        var kemasanSatuan = ""
+        var bNama = ""
+        var kNama = ""
+        var kSat = ""
         var completed = 0
 
-        db.collection("master_barang").document(barangId)
-            .get()
-            .addOnSuccessListener { doc ->
-                barangNama = doc.getString("nama_barang") ?: ""
-                completed++
-                if (completed == 2) callback(barangNama, kemasanNama, kemasanSatuan)
-            }
+        db.collection("master_barang").document(barangId).get().addOnSuccessListener { 
+            bNama = it.getString("nama_barang") ?: ""
+            if (++completed == 2) callback(bNama, kNama, kSat)
+        }
 
-        db.collection("master_kemasan").document(kemasanId)
-            .get()
-            .addOnSuccessListener { doc ->
-                kemasanNama = doc.getString("nama_kemasan") ?: ""
-                kemasanSatuan = doc.getString("satuan") ?: ""
-                completed++
-                if (completed == 2) callback(barangNama, kemasanNama, kemasanSatuan)
-            }
+        db.collection("master_kemasan").document(kemasanId).get().addOnSuccessListener { 
+            kNama = it.getString("nama_kemasan") ?: ""
+            kSat = it.getString("satuan") ?: ""
+            if (++completed == 2) callback(bNama, kNama, kSat)
+        }
     }
 
     private fun showDeleteConfirmation(item: ProduksiWithItems) {
         AlertDialog.Builder(requireContext())
             .setTitle("Hapus Produksi")
-            .setMessage("Apakah Anda yakin ingin menghapus data produksi ini?")
-            .setPositiveButton("Hapus") { _, _ ->
-                deleteProduksi(item)
-            }
+            .setMessage("Yakin ingin menghapus data produksi ini? Stok barang akan dikurangi dan stok kemasan dikembalikan.")
+            .setPositiveButton("Hapus") { _, _ -> deleteProduksi(item) }
             .setNegativeButton("Batal", null)
             .show()
     }
@@ -338,20 +368,27 @@ class ProduksiListFragment : Fragment() {
         showLoading(true)
         val batch = db.batch()
 
-        // 1. Kembalikan stok di master_kemasan (jika ada logika itu, tapi biasanya produksi hanya menambah stok barang_varian)
-        // 2. Kurangi stok di barang_varian yang sudah diproduksi
         item.items.forEach { pItem ->
+            // Kurangi stok barang varian
             val varianRef = db.collection("barang_varian").document(pItem.varianId)
             batch.update(varianRef, "stok", FieldValue.increment(-pItem.jumlahProduksi.toLong()))
+            
+            // Kembalikan stok kemasan
+            db.collection("barang_varian").document(pItem.varianId).get().addOnSuccessListener { vDoc ->
+                val kId = vDoc.getString("kemasan_id") ?: ""
+                if (kId.isNotEmpty()) {
+                    db.collection("master_kemasan").document(kId).update("stok", FieldValue.increment(pItem.jumlahProduksi.toLong()))
+                }
+            }
+            
             batch.delete(db.collection("produksi_items").document(pItem.id))
         }
 
-        // 3. Hapus data produksi utama
         batch.delete(db.collection("produksi").document(item.produksi.id))
 
         batch.commit().addOnSuccessListener {
             showLoading(false)
-            Toast.makeText(requireContext(), "Data produksi berhasil dihapus", Toast.LENGTH_SHORT).show()
+            Toast.makeText(requireContext(), "Data berhasil dihapus", Toast.LENGTH_SHORT).show()
         }.addOnFailureListener { e ->
             showLoading(false)
             Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -368,6 +405,7 @@ class ProduksiListFragment : Fragment() {
 
     override fun onDestroyView() {
         super.onDestroyView()
+        produksiListener?.remove()
         _binding = null
     }
 }

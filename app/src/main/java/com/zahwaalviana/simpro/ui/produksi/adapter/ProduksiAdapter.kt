@@ -11,12 +11,10 @@ import java.util.*
 
 class ProduksiAdapter(
     private val produksiList: List<ProduksiWithItems>,
-    private val userRole: String,
-    private val onEditClick: (ProduksiWithItems) -> Unit,
-    private val onDeleteClick: (ProduksiWithItems) -> Unit
+    private val onDetailClick: (ProduksiWithItems) -> Unit
 ) : RecyclerView.Adapter<ProduksiAdapter.ProduksiViewHolder>() {
 
-    private val dateFormat = SimpleDateFormat("dd/MM/yy HH:mm", Locale("id", "ID"))
+    private val dateFormat = SimpleDateFormat("dd MMMM yyyy HH:mm", Locale("id", "ID"))
 
     inner class ProduksiViewHolder(private val binding: ItemProduksiBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -24,37 +22,15 @@ class ProduksiAdapter(
         fun bind(produksiWithItems: ProduksiWithItems) {
             binding.apply {
                 val produksi = produksiWithItems.produksi
-                val items = produksiWithItems.items
-
                 tvTanggalProduksi.text = dateFormat.format(Date(produksi.tanggalProduksi))
                 
-                // Sembunyikan kolom mandor jika user adalah mandor
-                if (userRole == "mandor") {
-                    tvMandor.visibility = View.GONE
-                } else {
-                    tvMandor.visibility = View.VISIBLE
-                    tvMandor.text = produksi.mandorName
-                }
+                // Fitur Edit & Delete dihapus sesuai permintaan
+                ivEdit.visibility = View.GONE
+                ivDelete.visibility = View.GONE
                 
-                // Menampilkan nama-nama item barang yang diproduksi
-                val summary = items.joinToString(", ") { "${it.barangNama} x${it.jumlahProduksi}" }
-                tvBarangSummary.text = if (summary.isNotEmpty()) summary else "Tidak ada item"
-
-                // Hanya sembunyikan tombol EDIT untuk admin
-                if (userRole == "admin") {
-                    ivEdit.visibility = View.GONE
-                } else {
-                    ivEdit.visibility = View.VISIBLE
-                }
-                
-                ivDelete.visibility = View.VISIBLE
-
-                ivEdit.setOnClickListener {
-                    onEditClick(produksiWithItems)
-                }
-
-                ivDelete.setOnClickListener {
-                    onDeleteClick(produksiWithItems)
+                // Menampilkan tombol Detail
+                btnDetail.setOnClickListener {
+                    onDetailClick(produksiWithItems)
                 }
             }
         }

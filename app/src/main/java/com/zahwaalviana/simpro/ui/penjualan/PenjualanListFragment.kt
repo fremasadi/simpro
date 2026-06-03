@@ -22,14 +22,15 @@ import com.zahwaalviana.simpro.data.model.PenjualanWithItems
 import com.zahwaalviana.simpro.databinding.FragmentPenjualanListBinding
 import com.zahwaalviana.simpro.ui.penjualan.adapter.PenjualanAdapter
 import java.text.SimpleDateFormat
-import java.util.Locale
+import java.util.*
+import kotlin.math.ceil
 
 class PenjualanListFragment : Fragment() {
 
     private var _binding: FragmentPenjualanListBinding? = null
     private val binding get() = _binding!!
 
-    private lateinit var db: FirebaseFirestore
+    private val db = FirebaseFirestore.getInstance()
     private lateinit var adapter: PenjualanAdapter
     private var penjualanListener: ListenerRegistration? = null
 
@@ -43,6 +44,10 @@ class PenjualanListFragment : Fragment() {
     private var currentSortColumn = "tanggal" // "tanggal" or "total"
     private var isAscending = false
 
+    // Pagination variables
+    private var currentPage = 1
+    private val pageSize = 10
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -54,8 +59,7 @@ class PenjualanListFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        db = FirebaseFirestore.getInstance()
-
+        
         binding.appBarLayout.visibility = View.GONE
         setupRecyclerView()
         setupListeners()
@@ -83,7 +87,10 @@ class PenjualanListFragment : Fragment() {
         binding.etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
-            override fun afterTextChanged(s: Editable?) { applyFilter() }
+            override fun afterTextChanged(s: Editable?) {
+                currentPage = 1
+                applyFilter()
+            }
         })
 
         val dateRangeClickListener = View.OnClickListener { showDateRangePicker() }
@@ -98,15 +105,35 @@ class PenjualanListFragment : Fragment() {
             binding.etStartDate.setText("")
             binding.etEndDate.setText("")
             binding.btnResetDate.visibility = View.GONE
-            applyFilter()
+            currentPage = 1
+            loadPenjualanData()
         }
 
-        binding.tvHeaderTanggal.setOnClickListener {
-            toggleSort("tanggal")
+        binding.tvHeaderTanggal.setOnClickListener { toggleSort("tanggal") }
+        binding.tvHeaderTotal.setOnClickListener { toggleSort("total") }
+
+        // Pagination buttons
+        binding.btnPrevPage.setOnClickListener {
+            if (currentPage > 1) {
+                currentPage--
+                applyFilter()
+            }
         }
 
-        binding.tvHeaderTotal.setOnClickListener {
-            toggleSort("total")
+        binding.btnNextPage.setOnClickListener {
+            val query = binding.etSearch.text.toString().trim()
+            val filteredCount = if (query.isEmpty()) {
+                allPenjualanList.size
+            } else {
+                allPenjualanList.count { item ->
+                    item.items.any { it.barangNama.contains(query, ignoreCase = true) }
+                }
+            }
+            val totalPage = ceil(filteredCount.toDouble() / pageSize).toInt().coerceAtLeast(1)
+            if (currentPage < totalPage) {
+                currentPage++
+                applyFilter()
+            }
         }
     }
 
@@ -130,20 +157,32 @@ class PenjualanListFragment : Fragment() {
     private fun showDateRangePicker() {
         val picker = MaterialDatePicker.Builder.dateRangePicker()
             .setTitleText("Pilih Rentang Tanggal")
-            .apply {
-                if (startDateMs != null && endDateMs != null) {
-                    setSelection(androidx.core.util.Pair(startDateMs, endDateMs))
-                }
-            }
             .build()
 
         picker.addOnPositiveButtonClickListener { selection ->
-            startDateMs = selection.first
-            endDateMs = (selection.second ?: selection.first) + 86_399_999L
-            binding.etStartDate.setText(dateDisplayFormat.format(startDateMs!!))
-            binding.etEndDate.setText(dateDisplayFormat.format(endDateMs!! - 86_399_999L))
+            val utcStart = selection.first ?: return@addOnPositiveButtonClickListener
+            val utcEnd = selection.second ?: utcStart
+            
+            val cal = Calendar.getInstance(TimeZone.getTimeZone("UTC"))
+            
+            cal.timeInMillis = utcStart
+            val localStart = Calendar.getInstance()
+            localStart.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 0, 0, 0)
+            localStart.set(Calendar.MILLISECOND, 0)
+            startDateMs = localStart.timeInMillis
+            
+            cal.timeInMillis = utcEnd
+            val localEnd = Calendar.getInstance()
+            localEnd.set(cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH), 23, 59, 59)
+            localEnd.set(Calendar.MILLISECOND, 999)
+            endDateMs = localEnd.timeInMillis
+
+            binding.etStartDate.setText(dateDisplayFormat.format(Date(startDateMs!!)))
+            binding.etEndDate.setText(dateDisplayFormat.format(Date(endDateMs!!)))
             binding.btnResetDate.visibility = View.VISIBLE
-            applyFilter()
+            
+            currentPage = 1
+            loadPenjualanData()
         }
 
         picker.show(parentFragmentManager, "date_range_picker")
@@ -153,8 +192,15 @@ class PenjualanListFragment : Fragment() {
         showLoading(true)
 
         penjualanListener?.remove()
-        penjualanListener = db.collection("penjualan")
-            .orderBy("tanggal", Query.Direction.DESCENDING)
+        
+        var query: Query = db.collection("penjualan")
+        
+        if (startDateMs != null && endDateMs != null) {
+            query = query.whereGreaterThanOrEqualTo("tanggal", startDateMs!!)
+                         .whereLessThanOrEqualTo("tanggal", endDateMs!!)
+        }
+        
+        penjualanListener = query.orderBy("tanggal", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshots, error ->
                 if (error != null) {
                     showLoading(false)
@@ -165,10 +211,9 @@ class PenjualanListFragment : Fragment() {
 
                 allPenjualanList.clear()
                 val docs = snapshots?.documents ?: emptyList()
-                val totalDocs = docs.size
                 var processedDocs = 0
 
-                if (totalDocs == 0) {
+                if (docs.isEmpty()) {
                     showLoading(false)
                     binding.swipeRefresh.isRefreshing = false
                     applyFilter()
@@ -188,7 +233,7 @@ class PenjualanListFragment : Fragment() {
                         allPenjualanList.add(PenjualanWithItems(penjualan, items))
                         processedDocs++
 
-                        if (processedDocs == totalDocs) {
+                        if (processedDocs == docs.size) {
                             showLoading(false)
                             binding.swipeRefresh.isRefreshing = false
                             applyFilter()
@@ -204,14 +249,9 @@ class PenjualanListFragment : Fragment() {
         var filtered = allPenjualanList.filter { item ->
             val matchSearch = query.isEmpty() ||
                 item.items.any { it.barangNama.contains(query, ignoreCase = true) }
-
-            val matchDate = startDateMs == null || endDateMs == null ||
-                item.penjualan.tanggal in startDateMs!!..endDateMs!!
-
-            matchSearch && matchDate
+            matchSearch
         }
 
-        // Apply Sorting
         filtered = when (currentSortColumn) {
             "tanggal" -> {
                 if (isAscending) filtered.sortedBy { it.penjualan.tanggal }
@@ -221,13 +261,36 @@ class PenjualanListFragment : Fragment() {
                 if (isAscending) filtered.sortedBy { it.penjualan.totalHarga }
                 else filtered.sortedByDescending { it.penjualan.totalHarga }
             }
-            else -> filtered
+            else -> filtered.sortedByDescending { it.penjualan.tanggal }
         }
 
+        val totalItems = filtered.size
+        val totalPage = ceil(totalItems.toDouble() / pageSize).toInt().coerceAtLeast(1)
+
+        if (currentPage > totalPage) currentPage = totalPage
+
+        val startIndex = (currentPage - 1) * pageSize
+        val endIndex = (startIndex + pageSize).coerceAtMost(totalItems)
+
         penjualanList.clear()
-        penjualanList.addAll(filtered)
+        if (totalItems > 0) {
+            penjualanList.addAll(filtered.subList(startIndex, endIndex))
+        }
+
         adapter.notifyDataSetChanged()
         updateEmptyState()
+        updatePaginationUI(currentPage, totalPage)
+    }
+
+    private fun updatePaginationUI(current: Int, total: Int) {
+        binding.cardPagination.visibility = if (allPenjualanList.isEmpty() && penjualanList.isEmpty()) View.GONE else View.VISIBLE
+        binding.tvPageInfo.text = "$current / $total"
+        
+        binding.btnPrevPage.isEnabled = current > 1
+        binding.btnPrevPage.alpha = if (current > 1) 1.0f else 0.3f
+        
+        binding.btnNextPage.isEnabled = current < total
+        binding.btnNextPage.alpha = if (current < total) 1.0f else 0.3f
     }
 
     private fun loadItemsForPenjualan(penjualan: Penjualan, callback: (List<PenjualanItem>) -> Unit) {
@@ -236,10 +299,9 @@ class PenjualanListFragment : Fragment() {
             .get()
             .addOnSuccessListener { itemDocs ->
                 val items = mutableListOf<PenjualanItem>()
-                val totalItems = itemDocs.size()
                 var processedItems = 0
 
-                if (totalItems == 0) {
+                if (itemDocs.isEmpty) {
                     callback(emptyList())
                     return@addOnSuccessListener
                 }
@@ -267,12 +329,12 @@ class PenjualanListFragment : Fragment() {
                                 items.add(item)
                                 processedItems++
 
-                                if (processedItems == totalItems) callback(items)
+                                if (processedItems == itemDocs.size()) callback(items)
                             }
                         }
                         .addOnFailureListener {
                             processedItems++
-                            if (processedItems == totalItems) callback(items)
+                            if (processedItems == itemDocs.size()) callback(items)
                         }
                 }
             }

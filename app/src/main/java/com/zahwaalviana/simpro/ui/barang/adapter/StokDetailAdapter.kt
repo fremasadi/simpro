@@ -5,7 +5,7 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.zahwaalviana.simpro.R
-import com.zahwaalviana.simpro.ui.barang.BarangListFragment.StokDetailItem
+import com.zahwaalviana.simpro.data.model.StokDetailItem
 
 class StokDetailAdapter(
     private val list: List<StokDetailItem>

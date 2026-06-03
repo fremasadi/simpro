@@ -12,6 +12,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.zahwaalviana.simpro.data.model.Pengeluaran
 import com.zahwaalviana.simpro.databinding.FragmentPengeluaranListBinding
 import com.zahwaalviana.simpro.ui.pengeluaran.adapter.PengeluaranAdapter
@@ -163,7 +164,9 @@ class PengeluaranListFragment : Fragment() {
     }
 
     private fun loadPengeluaran() {
+        // DIUBAH: Menambahkan orderBy descending agar data terbaru muncul di atas
         db.collection("pengeluaran")
+            .orderBy("tanggal", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { snapshot ->
                 allPengeluaranList.clear()

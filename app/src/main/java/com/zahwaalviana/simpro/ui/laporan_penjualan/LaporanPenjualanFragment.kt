@@ -20,6 +20,7 @@ import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Query
 import com.zahwaalviana.simpro.data.model.Penjualan
 import com.zahwaalviana.simpro.data.model.PenjualanItem
 import com.zahwaalviana.simpro.databinding.FragmentLaporanBinding
@@ -128,6 +129,7 @@ class LaporanPenjualanFragment : Fragment() {
             { _, year, month, dayOfMonth ->
                 val selectedDate = Calendar.getInstance()
                 selectedDate.set(year, month, dayOfMonth, 0, 0, 0)
+                selectedDate.set(Calendar.MILLISECOND, 0)
                 onDateSelected(selectedDate)
             },
             calendar.get(Calendar.YEAR),
@@ -141,11 +143,12 @@ class LaporanPenjualanFragment : Fragment() {
         binding.tvStatus.text = "Mengambil data..."
 
         val startTs = startDate!!.timeInMillis
-        val endTs = endDate!!.timeInMillis + 86400000
+        val endTs = endDate!!.timeInMillis + 86399999
 
         db.collection("penjualan")
             .whereGreaterThanOrEqualTo("tanggal", startTs)
             .whereLessThanOrEqualTo("tanggal", endTs)
+            .orderBy("tanggal", Query.Direction.DESCENDING)
             .get().addOnSuccessListener { docs ->
                 val listPenjualan = mutableListOf<Pair<Penjualan, List<PenjualanItem>>>()
                 val totalDocs = docs.size()

@@ -11,6 +11,9 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.zahwaalviana.simpro.R
 import com.zahwaalviana.simpro.databinding.FragmentDashboardAdminBinding
+import com.zahwaalviana.simpro.ui.barang.BarangListFragment
+import com.zahwaalviana.simpro.ui.kemasan.KemasanListFragment
+import com.zahwaalviana.simpro.ui.varian.VarianListFragment
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
@@ -44,7 +47,32 @@ class DashboardAdminFragment : Fragment() {
         binding.tvGreetingDate.text = dateFormat.format(Date())
         
         setupFilter()
+        setupMenuListeners()
         loadWithFilter("today")
+    }
+
+    private fun setupMenuListeners() {
+        binding.btnMenuVarian.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.container_admin, VarianListFragment())
+                .addToBackStack(null)
+                .commit()
+            // Optional: update toolbar title if needed, or rely on fragment's own setup
+        }
+
+        binding.btnMenuBarang.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.container_admin, BarangListFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+
+        binding.btnMenuKemasan.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.container_admin, KemasanListFragment())
+                .addToBackStack(null)
+                .commit()
+        }
     }
 
     private fun setupFilter() {
@@ -130,8 +158,6 @@ class DashboardAdminFragment : Fragment() {
     }
 
     private fun loadPengeluaranStats() {
-        // Pengeluaran di simpro menggunakan format String "yyyy-MM-dd"
-        // Kita perlu konversi startTs & endTs ke format tersebut untuk filter (atau ambil semua lalu filter di client)
         val sdfFilter = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
         val startStr = sdfFilter.format(Date(startTs))
         val endStr = sdfFilter.format(Date(endTs))

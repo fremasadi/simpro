@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
+import com.google.firebase.firestore.Query
 import com.zahwaalviana.simpro.data.model.User
 import com.zahwaalviana.simpro.databinding.FragmentUserListBinding
 import com.zahwaalviana.simpro.ui.user.adapter.UserAdapter
@@ -95,7 +96,9 @@ class UserListFragment : Fragment() {
     private fun loadUsers() {
         showLoading(true)
 
+        // Diurutkan berdasarkan nama secara Descending (Z-A) agar konsisten dengan permintaan urutan descending
         userListener = db.collection("users")
+            .orderBy("name", Query.Direction.DESCENDING)
             .addSnapshotListener { snapshot, error ->
                 showLoading(false)
 
@@ -187,4 +190,3 @@ class UserListFragment : Fragment() {
         _binding = null
     }
 }
-

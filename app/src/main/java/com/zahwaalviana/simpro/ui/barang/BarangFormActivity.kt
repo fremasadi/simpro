@@ -279,8 +279,44 @@ class BarangFormActivity : AppCompatActivity() {
 
     private fun saveBarang() {
         showLoading(true)
-
         val namaBarang = binding.etNamaBarang.text.toString().trim()
+
+        // Validasi apakah nama barang sudah ada
+        db.collection("master_barang")
+            .whereEqualTo("nama_barang", namaBarang)
+            .get()
+            .addOnSuccessListener { documents ->
+                var isDuplicate = false
+                for (doc in documents) {
+                    if (isEditMode) {
+                        // Jika edit mode, cek apakah ID-nya berbeda
+                        if (doc.id != barangId) {
+                            isDuplicate = true
+                            break
+                        }
+                    } else {
+                        // Jika tambah baru, adanya dokumen berarti duplikat
+                        isDuplicate = true
+                        break
+                    }
+                }
+
+                if (isDuplicate) {
+                    showLoading(false)
+                    binding.tilNamaBarang.error = "Nama barang sudah terdaftar"
+                    Toast.makeText(this, "Nama barang sudah ada, gunakan nama lain", Toast.LENGTH_SHORT).show()
+                } else {
+                    binding.tilNamaBarang.error = null
+                    proceedSaveBarang(namaBarang)
+                }
+            }
+            .addOnFailureListener { e ->
+                showLoading(false)
+                Toast.makeText(this, "Error saat validasi nama: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun proceedSaveBarang(namaBarang: String) {
         val barangData = hashMapOf(
             "nama_barang" to namaBarang,
             "updated_at" to System.currentTimeMillis()
