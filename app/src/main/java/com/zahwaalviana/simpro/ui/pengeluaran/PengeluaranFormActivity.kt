@@ -12,6 +12,7 @@ import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.android.material.chip.Chip
+import com.google.android.material.textfield.TextInputEditText
 import com.google.firebase.firestore.FirebaseFirestore
 import com.zahwaalviana.simpro.R
 import com.zahwaalviana.simpro.data.model.RelatedItem
@@ -77,7 +78,7 @@ class PengeluaranFormActivity : AppCompatActivity() {
     private fun loadAllMasterData() {
         showLoading(true)
         var loadedCount = 0
-        val totalToLoad = 4
+        val totalToLoad = 3 // Master Pengeluaran, Barang, Kemasan
 
         fun checkComplete() {
             loadedCount++
@@ -106,26 +107,16 @@ class PengeluaranFormActivity : AppCompatActivity() {
             checkComplete()
         }
 
-        // 2. Load Produksi
-        db.collection("produksi").get().addOnSuccessListener { snapshot ->
-            snapshot.documents.forEach { doc ->
-                val tglMs = doc.getLong("tanggal_produksi") ?: 0L
-                val dateStr = sdf.format(Date(tglMs))
-                allRelatedItems.add(RelatedItem(doc.id, "produksi", "Produksi - $dateStr"))
-            }
-            checkComplete()
-        }
-
-        // 3. Load Barang
+        // 2. Load Barang (Bahan Baku)
         db.collection("master_barang").get().addOnSuccessListener { snapshot ->
             snapshot.documents.forEach {
                 val nama = it.getString("nama_barang") ?: return@forEach
-                allRelatedItems.add(RelatedItem(it.id, "barang", "Barang: $nama"))
+                allRelatedItems.add(RelatedItem(it.id, "barang", "Bahan Baku: $nama"))
             }
             checkComplete()
         }
 
-        // 4. Load Kemasan
+        // 3. Load Kemasan
         db.collection("master_kemasan").get().addOnSuccessListener { snapshot ->
             snapshot.documents.forEach {
                 val nama = it.getString("nama_kemasan") ?: return@forEach
@@ -175,6 +166,9 @@ class PengeluaranFormActivity : AppCompatActivity() {
         binding.btnPilihTerkait.setOnClickListener {
             showMultiSelectDialog()
         }
+        
+        // Update button text to be more specific
+        binding.btnPilihTerkait.text = "Pilih Bahan Baku atau Kemasan"
 
         binding.btnSimpan.setOnClickListener {
             if (!validate()) return@setOnClickListener
@@ -188,14 +182,12 @@ class PengeluaranFormActivity : AppCompatActivity() {
             .setView(dialogBinding.root)
             .create()
 
-        // Temporary list to hold selection during dialog session
         val tempSelected = selectedRelatedItems.toMutableList()
         
         val adapter = RelatedItemSelectAdapter(allRelatedItems, tempSelected)
         dialogBinding.rvSelectRelated.layoutManager = LinearLayoutManager(this)
         dialogBinding.rvSelectRelated.adapter = adapter
 
-        // Search Filter
         dialogBinding.etSearch.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
             override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
