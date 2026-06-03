@@ -19,10 +19,8 @@ import com.zahwaalviana.simpro.data.model.Barang
 import com.zahwaalviana.simpro.data.model.BarangWithVarian
 import com.zahwaalviana.simpro.databinding.FragmentBarangListBinding
 import com.zahwaalviana.simpro.ui.barang.adapter.BarangAdapter
-import com.zahwaalviana.simpro.ui.barang.adapter.StokDetailAdapter
-import java.text.SimpleDateFormat
-import java.util.Date
 import java.util.Locale
+import kotlin.math.*
 
 class BarangListFragment : Fragment() {
 
@@ -113,11 +111,10 @@ class BarangListFragment : Fragment() {
                 allBarangList.size
             } else {
                 allBarangList.count { item ->
-                    item.barang.namaBarang.contains(query, ignoreCase = true) ||
-                    item.varianList.any { it.kemasanNama.contains(query, ignoreCase = true) }
+                    item.barang.namaBarang.contains(query, ignoreCase = true)
                 }
             }
-            val totalPage = ceil(filteredCount.toDouble() / pageSize).toInt()
+            val totalPage = ceil(filteredCount.toDouble() / pageSize).toInt().coerceAtLeast(1)
             if (currentPage < totalPage) {
                 currentPage++
                 applyFilter()
@@ -194,7 +191,6 @@ class BarangListFragment : Fragment() {
                         id = barangId,
                         namaBarang = doc.getString("nama_barang") ?: ""
                     )
-                    // We only need the barang object now, variant list can be empty
                     allBarangList.add(BarangWithVarian(barang, emptyList()))
                 }
                 applyFilter()
