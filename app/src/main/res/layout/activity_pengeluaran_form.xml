@@ -55,65 +55,33 @@
                     android:inputType="text"/>
             </com.google.android.material.textfield.TextInputLayout>
 
-            <!-- TERKAIT PRODUKSI (Optional) -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilProduksi"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            <!-- TERKAIT SELECTION -->
+            <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
-                android:hint="Terkait Produksi (Opsional)"
-                app:hintTextColor="@color/black"
-                app:boxStrokeColor="@color/black"
-                app:endIconMode="clear_text">
+                android:text="Referensi Terkait (Opsional)"
+                android:textColor="@color/black"
+                android:textStyle="bold" />
 
-                <AutoCompleteTextView
-                    android:id="@+id/actvProduksi"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/black"
-                    android:inputType="text"/>
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- TERKAIT BARANG (Optional) -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilBarang"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnPilihTerkait"
+                style="@style/Widget.MaterialComponents.Button.OutlinedButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="Terkait Barang (Opsional)"
-                app:hintTextColor="@color/black"
-                app:boxStrokeColor="@color/black"
-                app:endIconMode="clear_text">
+                android:layout_marginTop="8dp"
+                android:text="Pilih Produksi, Barang, atau Kemasan"
+                app:strokeColor="#E59BA6"
+                android:textColor="#E59BA6"
+                app:icon="@android:drawable/ic_input_add"
+                app:iconTint="#E59BA6" />
 
-                <AutoCompleteTextView
-                    android:id="@+id/actvBarang"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/black"
-                    android:inputType="text"/>
-            </com.google.android.material.textfield.TextInputLayout>
-
-            <!-- TERKAIT KEMASAN (Optional) -->
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/tilKemasan"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/chipGroupTerkait"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:hint="Terkait Kemasan (Opsional)"
-                app:hintTextColor="@color/black"
-                app:boxStrokeColor="@color/black"
-                app:endIconMode="clear_text">
-
-                <AutoCompleteTextView
-                    android:id="@+id/actvKemasan"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:textColor="@color/black"
-                    android:inputType="text"/>
-            </com.google.android.material.textfield.TextInputLayout>
+                android:layout_marginTop="8dp"
+                app:chipSpacing="8dp" />
 
 
             <!-- TANGGAL -->

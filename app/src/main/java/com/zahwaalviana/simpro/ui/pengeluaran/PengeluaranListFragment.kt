@@ -14,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.zahwaalviana.simpro.data.model.Pengeluaran
+import com.zahwaalviana.simpro.data.model.RelatedItem
 import com.zahwaalviana.simpro.databinding.FragmentPengeluaranListBinding
 import com.zahwaalviana.simpro.ui.pengeluaran.adapter.PengeluaranAdapter
 import kotlin.math.ceil
@@ -111,18 +112,22 @@ class PengeluaranListFragment : Fragment() {
         }
 
         binding.btnNextPage.setOnClickListener {
-            val query = binding.etSearch.text.toString().trim()
-            val filteredCount = allPengeluaranList.count { item ->
-                val master = masterMap[item.masterPengeluaranId]
-                val namaMatch = master?.first?.contains(query, ignoreCase = true) == true
-                val ketMatch = item.keterangan.contains(query, ignoreCase = true)
-                query.isEmpty() || namaMatch || ketMatch
-            }
-            val totalPage = ceil(filteredCount.toDouble() / pageSize).toInt().coerceAtLeast(1)
+            val totalItems = getFilteredCount()
+            val totalPage = ceil(totalItems.toDouble() / pageSize).toInt().coerceAtLeast(1)
             if (currentPage < totalPage) {
                 currentPage++
                 applyFilter()
             }
+        }
+    }
+
+    private fun getFilteredCount(): Int {
+        val query = binding.etSearch.text.toString().trim()
+        return allPengeluaranList.count { item ->
+            val master = masterMap[item.masterPengeluaranId]
+            val namaMatch = master?.first?.contains(query, ignoreCase = true) == true
+            val ketMatch = item.keterangan.contains(query, ignoreCase = true)
+            query.isEmpty() || namaMatch || ketMatch
         }
     }
 
@@ -164,18 +169,26 @@ class PengeluaranListFragment : Fragment() {
     }
 
     private fun loadPengeluaran() {
-        // DIUBAH: Menambahkan orderBy descending agar data terbaru muncul di atas
         db.collection("pengeluaran")
             .orderBy("tanggal", Query.Direction.DESCENDING)
             .get()
             .addOnSuccessListener { snapshot ->
                 allPengeluaranList.clear()
                 snapshot.documents.forEach { doc ->
+                    val relatedItemsData = doc.get("relatedItems") as? List<Map<String, Any>>
+                    val relatedItems = relatedItemsData?.map { map ->
+                        RelatedItem(
+                            id = map["id"] as? String ?: "",
+                            type = map["type"] as? String ?: "",
+                            name = map["name"] as? String ?: ""
+                        )
+                    } ?: emptyList()
+
                     allPengeluaranList.add(
                         Pengeluaran(
                             id = doc.id,
                             masterPengeluaranId = doc.getString("master_pengeluaran_id") ?: "",
-                            produksiId = doc.getString("produksi_id") ?: "",
+                            relatedItems = relatedItems,
                             tanggal = doc.getString("tanggal") ?: "",
                             keterangan = doc.getString("keterangan") ?: "",
                             biaya = doc.getLong("biaya")?.toInt() ?: 0

@@ -2,12 +2,22 @@ package com.zahwaalviana.simpro.ui.pengeluaran
 
 import android.app.DatePickerDialog
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
+import android.view.LayoutInflater
 import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.android.material.chip.Chip
 import com.google.firebase.firestore.FirebaseFirestore
+import com.zahwaalviana.simpro.R
+import com.zahwaalviana.simpro.data.model.RelatedItem
 import com.zahwaalviana.simpro.databinding.ActivityPengeluaranFormBinding
+import com.zahwaalviana.simpro.databinding.DialogSelectRelatedBinding
+import com.zahwaalviana.simpro.ui.pengeluaran.adapter.RelatedItemSelectAdapter
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -19,22 +29,12 @@ class PengeluaranFormActivity : AppCompatActivity() {
     private val masterNamaList = mutableListOf<String>()
     private val masterMap = mutableMapOf<String, String>()
 
-    private val produksiNamaList = mutableListOf<String>()
-    private val produksiMap = mutableMapOf<String, String>()
-
-    private val barangNamaList = mutableListOf<String>()
-    private val barangMap = mutableMapOf<String, String>()
-
-    private val kemasanNamaList = mutableListOf<String>()
-    private val kemasanMap = mutableMapOf<String, String>()
+    private val allRelatedItems = mutableListOf<RelatedItem>()
+    private val selectedRelatedItems = mutableListOf<RelatedItem>()
 
     private var selectedMasterId: String? = null
-    private var selectedProduksiId: String? = null
-    private var selectedBarangId: String? = null
-    private var selectedKemasanId: String? = null
-
     private var pengeluaranId: String? = null
-    private val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
+    private val sdf = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale("id", "ID"))
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -87,6 +87,8 @@ class PengeluaranFormActivity : AppCompatActivity() {
             }
         }
 
+        allRelatedItems.clear()
+
         // 1. Load Master Pengeluaran
         db.collection("master_pengeluaran").get().addOnSuccessListener { snapshot ->
             masterNamaList.clear()
@@ -106,53 +108,28 @@ class PengeluaranFormActivity : AppCompatActivity() {
 
         // 2. Load Produksi
         db.collection("produksi").get().addOnSuccessListener { snapshot ->
-            produksiNamaList.clear()
-            produksiMap.clear()
             snapshot.documents.forEach { doc ->
                 val tglMs = doc.getLong("tanggal_produksi") ?: 0L
                 val dateStr = sdf.format(Date(tglMs))
-                val display = "Produksi - $dateStr"
-                produksiNamaList.add(display)
-                produksiMap[display] = doc.id
-            }
-            val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, produksiNamaList)
-            binding.actvProduksi.setAdapter(adapter)
-            binding.actvProduksi.setOnItemClickListener { _, _, position, _ ->
-                selectedProduksiId = produksiMap[produksiNamaList[position]]
+                allRelatedItems.add(RelatedItem(doc.id, "produksi", "Produksi - $dateStr"))
             }
             checkComplete()
         }
 
         // 3. Load Barang
         db.collection("master_barang").get().addOnSuccessListener { snapshot ->
-            barangNamaList.clear()
-            barangMap.clear()
             snapshot.documents.forEach {
                 val nama = it.getString("nama_barang") ?: return@forEach
-                barangNamaList.add(nama)
-                barangMap[nama] = it.id
-            }
-            val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, barangNamaList)
-            binding.actvBarang.setAdapter(adapter)
-            binding.actvBarang.setOnItemClickListener { _, _, position, _ ->
-                selectedBarangId = barangMap[barangNamaList[position]]
+                allRelatedItems.add(RelatedItem(it.id, "barang", "Barang: $nama"))
             }
             checkComplete()
         }
 
         // 4. Load Kemasan
         db.collection("master_kemasan").get().addOnSuccessListener { snapshot ->
-            kemasanNamaList.clear()
-            kemasanMap.clear()
             snapshot.documents.forEach {
                 val nama = it.getString("nama_kemasan") ?: return@forEach
-                kemasanNamaList.add(nama)
-                kemasanMap[nama] = it.id
-            }
-            val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, kemasanNamaList)
-            binding.actvKemasan.setAdapter(adapter)
-            binding.actvKemasan.setOnItemClickListener { _, _, position, _ ->
-                selectedKemasanId = kemasanMap[kemasanNamaList[position]]
+                allRelatedItems.add(RelatedItem(it.id, "kemasan", "Kemasan: $nama"))
             }
             checkComplete()
         }
@@ -173,30 +150,86 @@ class PengeluaranFormActivity : AppCompatActivity() {
             binding.etKeterangan.setText(doc.getString("keterangan"))
 
             selectedMasterId = doc.getString("master_pengeluaran_id")
-            selectedProduksiId = doc.getString("produksi_id")
-            selectedBarangId = doc.getString("barang_id")
-            selectedKemasanId = doc.getString("kemasan_id")
+            
+            // Load related items
+            val itemsData = doc.get("relatedItems") as? List<Map<String, Any>>
+            selectedRelatedItems.clear()
+            itemsData?.forEach { map ->
+                selectedRelatedItems.add(RelatedItem(
+                    id = map["id"] as? String ?: "",
+                    type = map["type"] as? String ?: "",
+                    name = map["name"] as? String ?: ""
+                ))
+            }
 
-            // Pre-select items in dropdowns
+            // Pre-select master pengeluaran
             masterMap.entries.find { it.value == selectedMasterId }?.let {
                 binding.actvMasterPengeluaran.setText(it.key, false)
             }
-            produksiMap.entries.find { it.value == selectedProduksiId }?.let {
-                binding.actvProduksi.setText(it.key, false)
-            }
-            barangMap.entries.find { it.value == selectedBarangId }?.let {
-                binding.actvBarang.setText(it.key, false)
-            }
-            kemasanMap.entries.find { it.value == selectedKemasanId }?.let {
-                binding.actvKemasan.setText(it.key, false)
-            }
+            
+            updateChips()
         }
     }
 
     private fun setupListener() {
+        binding.btnPilihTerkait.setOnClickListener {
+            showMultiSelectDialog()
+        }
+
         binding.btnSimpan.setOnClickListener {
             if (!validate()) return@setOnClickListener
             savePengeluaran()
+        }
+    }
+
+    private fun showMultiSelectDialog() {
+        val dialogBinding = DialogSelectRelatedBinding.inflate(layoutInflater)
+        val dialog = AlertDialog.Builder(this)
+            .setView(dialogBinding.root)
+            .create()
+
+        // Temporary list to hold selection during dialog session
+        val tempSelected = selectedRelatedItems.toMutableList()
+        
+        val adapter = RelatedItemSelectAdapter(allRelatedItems, tempSelected)
+        dialogBinding.rvSelectRelated.layoutManager = LinearLayoutManager(this)
+        dialogBinding.rvSelectRelated.adapter = adapter
+
+        // Search Filter
+        dialogBinding.etSearch.addTextChangedListener(object : TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+            override fun afterTextChanged(s: Editable?) {
+                adapter.filter(s.toString())
+            }
+        })
+
+        dialogBinding.btnCancel.setOnClickListener {
+            dialog.dismiss()
+        }
+
+        dialogBinding.btnDone.setOnClickListener {
+            selectedRelatedItems.clear()
+            selectedRelatedItems.addAll(tempSelected)
+            updateChips()
+            dialog.dismiss()
+        }
+
+        dialog.show()
+    }
+
+    private fun updateChips() {
+        binding.chipGroupTerkait.removeAllViews()
+        selectedRelatedItems.forEach { item ->
+            val chip = Chip(this).apply {
+                text = item.name
+                isCloseIconVisible = true
+                setOnCloseIconClickListener {
+                    selectedRelatedItems.removeAll { it.id == item.id }
+                    updateChips()
+                }
+            }
+            binding.chipGroupTerkait.addView(chip)
         }
     }
 
@@ -219,16 +252,11 @@ class PengeluaranFormActivity : AppCompatActivity() {
     private fun savePengeluaran() {
         showLoading(true)
 
-        // Reset IDs if the text is empty (user cleared it)
-        if (binding.actvProduksi.text.isEmpty()) selectedProduksiId = null
-        if (binding.actvBarang.text.isEmpty()) selectedBarangId = null
-        if (binding.actvKemasan.text.isEmpty()) selectedKemasanId = null
-
         val data = mutableMapOf<String, Any?>(
             "master_pengeluaran_id" to selectedMasterId!!,
-            "produksi_id" to selectedProduksiId,
-            "barang_id" to selectedBarangId,
-            "kemasan_id" to selectedKemasanId,
+            "relatedItems" to selectedRelatedItems.map { 
+                mapOf("id" to it.id, "type" to it.type, "name" to it.name) 
+            },
             "tanggal" to binding.etTanggal.text.toString(),
             "keterangan" to binding.etKeterangan.text.toString(),
             "biaya" to binding.etBiaya.text.toString().toInt(),
@@ -255,6 +283,7 @@ class PengeluaranFormActivity : AppCompatActivity() {
     private fun showLoading(show: Boolean) {
         binding.progressBar.visibility = if (show) View.VISIBLE else View.GONE
         binding.btnSimpan.isEnabled = !show
+        binding.btnPilihTerkait.isEnabled = !show
     }
 
     private fun toast(msg: String?) {
