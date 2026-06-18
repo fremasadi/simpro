@@ -73,10 +73,27 @@ class PenjualanListFragment : Fragment() {
     private fun setupRecyclerView() {
         adapter = PenjualanAdapter(
             penjualanList,
-            onDelete = { item -> showDeleteConfirmation(item) }
+            onDetail = { item -> showDetailDialog(item) }
         )
         binding.rvPenjualan.layoutManager = LinearLayoutManager(requireContext())
         binding.rvPenjualan.adapter = adapter
+    }
+
+    private fun showDetailDialog(item: PenjualanWithItems) {
+        val message = StringBuilder()
+        message.append("Detail Transaksi:\n")
+        item.items.forEach {
+            message.append("- ${it.barangNama} (${it.kemasanNama}): ${it.jumlah} x Rp${it.hargaSatuan} = Rp${it.subtotal}\n")
+        }
+        message.append("\nTotal: Rp${item.penjualan.totalHarga}")
+        message.append("\nBayar: Rp${item.penjualan.totalBayar}")
+        message.append("\nKembali: Rp${item.penjualan.kembalian}")
+
+        AlertDialog.Builder(requireContext())
+            .setTitle("Detail Penjualan")
+            .setMessage(message.toString())
+            .setPositiveButton("Tutup", null)
+            .show()
     }
 
     private fun setupListeners() {
@@ -364,48 +381,6 @@ class PenjualanListFragment : Fragment() {
                 kemasanNama = doc.getString("nama_kemasan") ?: ""
                 completed++
                 if (completed == 2) callback(barangNama, kemasanNama)
-            }
-    }
-
-    private fun showDeleteConfirmation(item: PenjualanWithItems) {
-        AlertDialog.Builder(requireContext())
-            .setTitle("Hapus Transaksi")
-            .setMessage("Yakin ingin menghapus transaksi ini? Stok barang akan dikembalikan.")
-            .setPositiveButton("Hapus") { _, _ -> deletePenjualan(item) }
-            .setNegativeButton("Batal", null)
-            .show()
-    }
-
-    private fun deletePenjualan(penjualanWithItems: PenjualanWithItems) {
-        db.collection("penjualan_items")
-            .whereEqualTo("penjualan_id", penjualanWithItems.penjualan.id)
-            .get()
-            .addOnSuccessListener { itemDocs ->
-                val batch = db.batch()
-
-                itemDocs.documents.forEach { doc ->
-                    val varianId = doc.getString("varian_id") ?: ""
-                    val jumlah = doc.getLong("jumlah")?.toInt() ?: 0
-
-                    if (varianId.isNotEmpty() && jumlah > 0) {
-                        batch.update(
-                            db.collection("barang_varian").document(varianId),
-                            "stok", FieldValue.increment(jumlah.toLong())
-                        )
-                    }
-
-                    batch.delete(doc.reference)
-                }
-
-                batch.delete(db.collection("penjualan").document(penjualanWithItems.penjualan.id))
-
-                batch.commit()
-                    .addOnSuccessListener {
-                        Toast.makeText(requireContext(), "Transaksi berhasil dihapus", Toast.LENGTH_SHORT).show()
-                    }
-                    .addOnFailureListener { e ->
-                        Toast.makeText(requireContext(), "Error: ${e.message}", Toast.LENGTH_SHORT).show()
-                    }
             }
     }
 

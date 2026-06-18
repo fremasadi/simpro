@@ -12,7 +12,7 @@ import java.util.Locale
 
 class PenjualanAdapter(
     private val list: List<PenjualanWithItems>,
-    private val onDelete: (PenjualanWithItems) -> Unit
+    private val onDetail: (PenjualanWithItems) -> Unit
 ) : RecyclerView.Adapter<PenjualanAdapter.ViewHolder>() {
 
     private val currencyFormat = NumberFormat.getCurrencyInstance(Locale("id", "ID"))
@@ -25,11 +25,7 @@ class PenjualanAdapter(
             tvTanggal.text = dateFormat.format(Date(item.penjualan.tanggal))
             tvTotalHarga.text = currencyFormat.format(item.penjualan.totalHarga)
             
-            // Buat ringkasan barang: "Kecap x2, Saos x1"
-            val summary = item.items.joinToString(", ") { "${it.barangNama} x${it.jumlah}" }
-            tvBarangSummary.text = summary
-
-            ivDelete.setOnClickListener { onDelete(item) }
+            btnDetail.setOnClickListener { onDetail(item) }
         }
     }
 

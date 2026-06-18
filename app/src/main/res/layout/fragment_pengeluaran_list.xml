@@ -70,14 +70,15 @@
             android:fillViewport="true">
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="match_parent"
+                android:minWidth="580dp"
                 android:orientation="vertical">
 
                 <!-- TABLE HEADER -->
                 <LinearLayout
                     android:id="@+id/headerTable"
-                    android:layout_width="wrap_content"
+                    android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
                     android:padding="12dp"
@@ -85,8 +86,9 @@
 
                     <TextView
                         android:id="@+id/tvHeaderTanggal"
-                        android:layout_width="100dp"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:text="Tanggal ↓"
                         android:textStyle="bold"
                         android:textSize="13sp"
@@ -96,8 +98,9 @@
                         android:background="?attr/selectableItemBackground"/>
 
                     <TextView
-                        android:layout_width="150dp"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1.5"
                         android:layout_marginHorizontal="8dp"
                         android:text="Nama / Kategori"
                         android:textStyle="bold"
@@ -105,8 +108,9 @@
                         android:textColor="#212121" />
 
                     <TextView
-                        android:layout_width="150dp"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1.5"
                         android:text="Keterangan"
                         android:textStyle="bold"
                         android:textSize="13sp"
@@ -114,8 +118,9 @@
 
                     <TextView
                         android:id="@+id/tvHeaderBiaya"
-                        android:layout_width="100dp"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_weight="1"
                         android:text="Biaya"
                         android:gravity="end"
                         android:textStyle="bold"
@@ -127,8 +132,9 @@
                         android:background="?attr/selectableItemBackground"/>
 
                     <TextView
-                        android:layout_width="80dp"
+                        android:layout_width="0dp"
                         android:layout_height="wrap_content"
+                        android:layout_weight="0.8"
                         android:text="Aksi"
                         android:gravity="center"
                         android:textStyle="bold"

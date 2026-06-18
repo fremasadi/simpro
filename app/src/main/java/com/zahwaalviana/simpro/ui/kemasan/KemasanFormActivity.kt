@@ -109,12 +109,47 @@ class KemasanFormActivity : AppCompatActivity() {
     }
 
     private fun saveKemasan() {
-        showLoading(true)
-
         val namaKemasan = binding.etNamaKemasan.text.toString().trim()
         val satuan = binding.actvSatuan.text.toString().trim()
         val stok = binding.etStok.text.toString().toDoubleOrNull() ?: 0.0
 
+        showLoading(true)
+
+        // Cek apakah nama kemasan sudah ada
+        db.collection("master_kemasan")
+            .whereEqualTo("nama_kemasan", namaKemasan)
+            .get()
+            .addOnSuccessListener { documents ->
+                var isDuplicate = false
+                for (doc in documents) {
+                    if (isEditMode) {
+                        // Jika edit, abaikan jika ID sama dengan data yang sedang diedit
+                        if (doc.id != kemasanId) {
+                            isDuplicate = true
+                            break
+                        }
+                    } else {
+                        // Jika tambah baru, semua temuan adalah duplikat
+                        isDuplicate = true
+                        break
+                    }
+                }
+
+                if (isDuplicate) {
+                    showLoading(false)
+                    binding.tilNamaKemasan.error = "Nama kemasan sudah ada"
+                    Toast.makeText(this, "Data kemasan sudah ada", Toast.LENGTH_SHORT).show()
+                } else {
+                    executeSave(namaKemasan, satuan, stok)
+                }
+            }
+            .addOnFailureListener { e ->
+                showLoading(false)
+                Toast.makeText(this, "Error checking duplicate: ${e.message}", Toast.LENGTH_SHORT).show()
+            }
+    }
+
+    private fun executeSave(namaKemasan: String, satuan: String, stok: Double) {
         val kemasanData = hashMapOf(
             "nama_kemasan" to namaKemasan,
             "satuan" to satuan,

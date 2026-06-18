@@ -11,6 +11,9 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import com.zahwaalviana.simpro.R
 import com.zahwaalviana.simpro.databinding.FragmentDashboardMandorBinding
+import com.zahwaalviana.simpro.ui.barang.BarangListFragment
+import com.zahwaalviana.simpro.ui.kemasan.KemasanListFragment
+import com.zahwaalviana.simpro.ui.produksi.ProduksiListFragment
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
@@ -52,7 +55,31 @@ class DashboardMandorFragment : Fragment() {
         mandorId = currentUser?.uid ?: ""
 
         setupFilter()
+        setupMenuListeners()
         loadWithFilter("today")
+    }
+
+    private fun setupMenuListeners() {
+        binding.btnMenuProduksi.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.container_mandor, ProduksiListFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+
+        binding.btnMenuBarang.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.container_mandor, BarangListFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+
+        binding.btnMenuKemasan.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.container_mandor, KemasanListFragment())
+                .addToBackStack(null)
+                .commit()
+        }
     }
 
     private fun setupFilter() {

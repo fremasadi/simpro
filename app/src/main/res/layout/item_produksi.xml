@@ -17,52 +17,70 @@
             android:id="@+id/tvTanggalProduksi"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_weight="1.2"
             android:text="15/05/24 10:00"
-            android:textSize="14sp"
-            android:textColor="#212121"
-            android:textStyle="bold" />
+            android:textSize="12sp"
+            android:textColor="#424242" />
 
         <TextView
             android:id="@+id/tvMandor"
-            android:layout_width="120dp"
+            android:layout_width="0dp"
             android:layout_height="wrap_content"
+            android:layout_weight="1.5"
             android:layout_marginHorizontal="8dp"
             android:text="Mandor Name"
             android:textSize="12sp"
             android:textColor="#424242"
             android:ellipsize="end"
-            android:maxLines="1"
-            android:visibility="gone" />
+            android:maxLines="1" />
 
         <TextView
             android:id="@+id/tvBarangSummary"
             android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/btnDetail"
-            style="@style/Widget.MaterialComponents.Button.TextButton"
-            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Detail"
-            android:textColor="#E59BA6"
+            android:layout_weight="2"
+            android:text="Item Summary"
             android:textSize="12sp"
-            app:rippleColor="#FCE4EC" />
+            android:textColor="#424242"
+            android:ellipsize="end"
+            android:maxLines="2" />
 
-        <!-- Hidden but maintained for binding compatibility if needed, or removed -->
-        <ImageView
-            android:id="@+id/ivEdit"
+        <LinearLayout
             android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
+            android:layout_height="wrap_content"
+            android:layout_weight="0.8"
+            android:orientation="horizontal"
+            android:gravity="center">
 
-        <ImageView
-            android:id="@+id/ivDelete"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:visibility="gone" />
+            <ImageView
+                android:id="@+id/ivEdit"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@android:drawable/ic_menu_edit"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="#E59BA6" />
+
+            <ImageView
+                android:id="@+id/ivDelete"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:src="@android:drawable/ic_menu_delete"
+                android:padding="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                app:tint="#D32F2F" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnDetail"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Detail"
+                android:textColor="#E59BA6"
+                android:textSize="12sp"
+                android:visibility="gone"
+                app:rippleColor="#FCE4EC" />
+        </LinearLayout>
 
     </LinearLayout>
 
@@ -71,6 +89,7 @@
         android:layout_height="1dp"
         android:background="#EEEEEE" />
 
+    <!-- Maintain compatibility for binding if these IDs are used elsewhere -->
     <com.google.android.material.chip.ChipGroup
         android:id="@+id/chipGroupItems"
         android:layout_width="0dp"

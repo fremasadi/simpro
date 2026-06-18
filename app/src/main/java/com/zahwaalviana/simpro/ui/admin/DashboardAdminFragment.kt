@@ -13,6 +13,9 @@ import com.zahwaalviana.simpro.R
 import com.zahwaalviana.simpro.databinding.FragmentDashboardAdminBinding
 import com.zahwaalviana.simpro.ui.barang.BarangListFragment
 import com.zahwaalviana.simpro.ui.kemasan.KemasanListFragment
+import com.zahwaalviana.simpro.ui.pengeluaran.PengeluaranListFragment
+import com.zahwaalviana.simpro.ui.penjualan.PenjualanListFragment
+import com.zahwaalviana.simpro.ui.produksi.ProduksiListFragment
 import com.zahwaalviana.simpro.ui.varian.VarianListFragment
 import java.text.NumberFormat
 import java.text.SimpleDateFormat
@@ -70,6 +73,27 @@ class DashboardAdminFragment : Fragment() {
         binding.btnMenuKemasan.setOnClickListener {
             parentFragmentManager.beginTransaction()
                 .replace(R.id.container_admin, KemasanListFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+
+        binding.btnMenuPengeluaran.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.container_admin, PengeluaranListFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+
+        binding.btnMenuPenjualan.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.container_admin, PenjualanListFragment())
+                .addToBackStack(null)
+                .commit()
+        }
+
+        binding.btnMenuProduksi.setOnClickListener {
+            parentFragmentManager.beginTransaction()
+                .replace(R.id.container_admin, ProduksiListFragment())
                 .addToBackStack(null)
                 .commit()
         }
